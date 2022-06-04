@@ -12,12 +12,15 @@ class MatrixFactorization:
     """Class for a Matrix Factorization Model. A hybrid (content-based and collaborative filtering) recommender model
     that takes user embeddings and item embeddings to predict unobserved interactions in a given interaction table"""
 
-    def __init__(self, num_features, shape):
+    def __init__(self, num_features, shape, user_init='uniform', item_init='uniform'):
 
         """
         Arguments:\n
         - num_features: a python int, number of latent features for the user and item embeddings\n
-        - shape: a python tuple of the form (n,m) where (n,m) is the shape of the interaction table we are approximating
+        - shape: a python tuple of the form (n,m) where (n,m) is the shape of the interaction table we are approximating\n
+        - user_init: a python string, choose the initialization scheme for our user embeddings\n
+        - item_init: a python string, choose the initialization scheme for our item embeddings\n
+        --- NOTE: By default, user and item embeddings are both uniform at the start
 
         Purpose:
         Initializes the following instance attributes:\n
@@ -28,17 +31,20 @@ class MatrixFactorization:
         user_shape = (n, num_features)
         item_shape = (m, num_features)
 
-        self.U = tf.Variable(tf.random.uniform(shape=user_shape), trainable=True, dtype=tf.float32)
-        self.V = tf.Variable(tf.random.uniform(shape=item_shape), trainable=True, dtype=tf.float32)
+        #
+        if user_init == 'uniform':
+            self.U = tf.Variable(tf.random.uniform(shape=user_shape), trainable=True, dtype=tf.float32)
+        if item_init == 'uniform':
+            self.V = tf.Variable(tf.random.uniform(shape=item_shape), trainable=True, dtype=tf.float32)
 
     @tf.function
     def loss(self, A, U, V, lambda_1, lambda_2):
         """
         Arguments:\n
         - A: an array with 2 axes, an interaction table between users and items\n
-        - U: user embeddings
-        - V: item embeddings
-        - lambda_1: weighting hyperparameters that controls contribution of observed interactions
+        - U: user embeddings\n
+        - V: item embeddings\n
+        - lambda_1: weighting hyperparameters that controls contribution of observed interactions\n
         - lambda_2: weighting hyperparameters that controls contribution of unobserved interactions
 
         Purpose:\n
