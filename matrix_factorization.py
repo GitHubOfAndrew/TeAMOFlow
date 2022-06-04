@@ -12,7 +12,7 @@ class MatrixFactorization:
     """Class for a Matrix Factorization Model. A hybrid (content-based and collaborative filtering) recommender model
     that takes user embeddings and item embeddings to predict unobserved interactions in a given interaction table"""
 
-    def __init__(self, num_features, shape, user_init='uniform', item_init='uniform'):
+    def __init__(self, num_features, shape, user_init='uniform', item_init='uniform', minval=0, maxval=None):
 
         """
         Arguments:\n
@@ -20,7 +20,10 @@ class MatrixFactorization:
         - shape: a python tuple of the form (n,m) where (n,m) is the shape of the interaction table we are approximating\n
         - user_init: a python string, choose the initialization scheme for our user embeddings\n
         - item_init: a python string, choose the initialization scheme for our item embeddings\n
-        --- NOTE: By default, user and item embeddings are both uniform at the start
+        --- NOTE: By default, user and item embeddings are both uniform at the start\n
+        --- Choices of embedding initialization:\n
+        ----- uniform: a random uniform distribution initialization from minval to maxval\n
+        ----- normal: a random normal distribution initialization with a mean of 0.5*(maxval + minval) and variance of 0.25*(maxval + minval)
 
         Purpose:
         Initializes the following instance attributes:\n
@@ -31,11 +34,20 @@ class MatrixFactorization:
         user_shape = (n, num_features)
         item_shape = (m, num_features)
 
-        #
+        # initialize user and item embeddings
         if user_init == 'uniform':
-            self.U = tf.Variable(tf.random.uniform(shape=user_shape), trainable=True, dtype=tf.float32)
+            self.U = tf.Variable(tf.random.uniform(shape=user_shape, minval=minval, maxval=maxval), trainable=True,
+                                 dtype=tf.float32)
         if item_init == 'uniform':
-            self.V = tf.Variable(tf.random.uniform(shape=item_shape), trainable=True, dtype=tf.float32)
+            self.V = tf.Variable(tf.random.uniform(shape=item_shape, minval=minval, maxval=maxval), trainable=True,
+                                 dtype=tf.float32)
+
+        if user_init == 'normal':
+            self.U = tf.Variable(tf.random.normal(shape=user_shape, mean=(maxval + minval)/2, stddev=(maxval + minval)/4),
+                                 trainable=True, dtype=tf.float32)
+        if item_init == 'normal':
+            self.B = tf.Variable(tf.random.normal(shape=user_shape, mean=(maxval + minval)/2, stddev=(maxval + minval)/4),
+                                 trainable=True, dtype=tf.float32)
 
     @tf.function
     def loss(self, A, U, V, lambda_1, lambda_2):
@@ -120,13 +132,13 @@ class MatrixFactorization:
                 # print the updates for every epoch
                 if (epoch + 1) % 50 == 0:
                     print(
-                        f'Epoch {epoch + 1}/{epochs} | Loss {epoch_loss} | Total Runtime {total_time} sec.')
+                        f'Epoch {epoch + 1}/{epochs} | Loss {epoch_loss:.6f} | Total Runtime {total_time:.4f} sec.')
 
             if verbose == 2:
                 total_time += (end - start)
 
                 # print the updates for every epoch
                 if (epoch + 1) % 50 == 0:
-                    print(f'Epoch {epoch + 1}/{epochs} | Total Runtime {total_time} sec.')
+                    print(f'Epoch {epoch + 1}/{epochs} | Total Runtime {total_time:.4f} sec.')
 
         return train_history
