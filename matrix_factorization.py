@@ -117,6 +117,10 @@ class MatrixFactorization:
             # compute the total mean loss and end timer
             epoch_loss = tf.reduce_mean(loss_fn).numpy()
             end = t.default_timer()
+            
+            # add a break in the training loop for when the loss is too low, we want to combat overfitting to this extent
+            if epoch_loss <= 1e-6:
+                break
 
             # put in key for train history, get loss from every epoch
             li_loss.append(epoch_loss)
