@@ -175,9 +175,62 @@ class MatrixFactorization:
             pred_int = predicted_interaction
 
         return pred_int
-    
-    def rank(self):
-        pass
+
+    def score(self, thresh, k, A):
+        """
+        Arguments:\n
+        - thresh: python int, threshold of score that we want to set for relevancy of item
+        - k: python int,  the top k scores that we will take from our predictions
+        - A: tensorflow tensor, the original interaction table with observed interactions
+
+        Purpose:\n
+        - score the model's performance according to the recall @ k and by indicating relevance
+        NOTE: for now, relevance will be judged by the model's ability to exceed a certain threshold
+
+        Methodology:\n
+        - We will score by recall @ k which we interpret as follows:
+        --- fix k to specify the top k items to look at, according to a supplied threshhold, thresh, we pick out two items:\n
+        ----- relevant items: all interactions (nonzero entries) that are >= thresh\n
+        ----- irrelevant items: all interactions (nonzero entries) that are < thresh
+
+        --- then we score the predicted recommendations according to the following:\n
+        ----- predicted rating >= thresh ---> recommend\n\n
+        ----- predicted rating < thresh ---> don't recommend
+
+        --- Precision @ k: the proportion of recommendations that are in top-k that are relevant (i.e. # of relevant recommended items at k / # of recommended items)\n
+        --- Recall @ k: the proportion of relevant items found in top k recs (i.e. # of relevant recommended items at k / # of relevant items)
+        """
+
+        # step 1: compute relevant recommended items @ k
+
+        ### get predicted interactions
+        predicted_interactions = self.predict()
+
+        ### get indices for predictions by model
+        pred_indices = tf.where(A == 0)
+
+        ### parse through predicted interactions to find all recommended items
+        li = []
+        for index, ind in enumerate(pred_indices.numpy()):
+            row, col = ind
+            li.append(((row, col), predicted_interactions[row, col].numpy()))
+
+        ### sort the predictions in descending order
+        li.sort(key=lambda x: x[1], reverse=True)
+
+        count_rel_rec_k = 0
+        for tuple_predicted in li[:k]:
+            indices, val = tuple_predicted
+            if val >= thresh:
+                count_rel_rec_k += 1
+
+        # step 2: compute the number of relevant items and number of recommended items
+        count_rec_items, count_rel_items = len(li), tf.reduce_sum(tf.where(A >= thresh, 1.0, 0.0)).numpy()
+
+        # step 3: compute precision at k, recall at k
+        precision_k, recall_k = count_rel_rec_k / count_rec_items, count_rel_rec_k / count_rel_items
+
+        return precision_k, recall_k
 
     def save_model(self):
         """
