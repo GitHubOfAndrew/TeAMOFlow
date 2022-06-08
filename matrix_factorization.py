@@ -172,6 +172,7 @@ class MatrixFactorization:
         else:
 
             # just output the direct result of the embeddings if no interaction table is supplied
+            # NOTE: THIS IS THE RECOMMENDED METHOD OF OUTPUT, WE ARE GOING TO JUDGE THE MODEL'S PERFORMANCE USING PRECISION AND RECALL @ K
             pred_int = predicted_interaction
 
         return pred_int
@@ -230,7 +231,10 @@ class MatrixFactorization:
         # step 3: compute precision at k, recall at k
         precision_k, recall_k = count_rel_rec_k / count_rec_items, count_rel_rec_k / count_rel_items
 
-        return precision_k, recall_k
+        ### compute the f1 score at k as well
+        f1_at_k = (2.0 * precision_k * recall_k) / (precision_k + recall_k)
+
+        return precision_k, recall_k, f1_at_k
 
     def save_model(self):
         """
