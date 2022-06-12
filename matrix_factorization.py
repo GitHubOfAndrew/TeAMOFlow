@@ -120,7 +120,7 @@ class MatrixFactorization:
             epoch_loss = tf.reduce_mean(loss_fn).numpy()
             end = t.default_timer()
 
-            # add a break in the training loop for when the loss is too low, we want to combat overfitting to this extent
+            # add a break in the training loop for when the loss is too low, we want to combat overfitting
             if epoch_loss <= 1e-6:
                 break
 
@@ -185,7 +185,7 @@ class MatrixFactorization:
         - A: tensorflow tensor, the original interaction table with observed interactions
 
         Purpose:\n
-        - score the model's performance according to the recall @ k and by indicating relevance
+        - score the model's performance according to the recall @ k and by indicating relevance, returns as (precision, recall, f1 score)
         NOTE: for now, relevance will be judged by the model's ability to exceed a certain threshold
 
         Methodology:\n
