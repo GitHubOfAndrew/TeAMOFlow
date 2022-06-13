@@ -49,48 +49,54 @@ class MatrixFactorization:
         # save inputs for later use when saving model
         self.num_features, self.shape = num_features, shape
 
-    @tf.function
-    def loss(self, A, U, V, lambda_1, lambda_2):
-        """
-        Arguments:\n
-        - A: an array with 2 axes, an interaction table between users and items\n
-        - U: user embeddings\n
-        - V: item embeddings\n
-        - lambda_1: weighting hyperparameters that controls contribution of observed interactions\n
-        - lambda_2: weighting hyperparameters that controls contribution of unobserved interactions
-
-        Purpose:\n
-        Outputs the loss for both observed and unobserved interactions. In particular, it creates a loss graph for computation
-        in tensorflow's autograd
-
-        2022-06-03 - The only loss available is the MSE loss, this will be changed as necessary as we discover more losses to use
-        """
-
-        # mean squared error loss with regularization
-        return tf.where(A != 0, tf.multiply(lambda_1, tf.pow(A - tf.matmul(U, tf.transpose(V)), 2)),
-                        tf.multiply(lambda_2, tf.pow(-tf.matmul(U, tf.transpose(V)), 2)))
-    #
     # @tf.function
-    # def loss(self, loss_graph=MSE()):
+    # def loss(self, A, U, V, lambda_1, lambda_2):
     #     """
     #     Arguments:\n
-    #     - loss_graph: a TeAMOFlow loss_graph object, this is a computational graph representing our loss function; please look in loss_graphs.py to see more info
+    #     - A: an array with 2 axes, an interaction table between users and items\n
+    #     - U: user embeddings\n
+    #     - V: item embeddings\n
+    #     - lambda_1: weighting hyperparameters that controls contribution of observed interactions\n
+    #     - lambda_2: weighting hyperparameters that controls contribution of unobserved interactions
     #
     #     Purpose:\n
-    #     - A loss function that will be incorporated into our computational graph in our training loop
-    #     - Returns a tensorflow tensor (a constant)
+    #     Outputs the loss for both observed and unobserved interactions. In particular, it creates a loss graph for computation
+    #     in tensorflow's autograd
+    #
+    #     2022-06-03 - The only loss available is the MSE loss, this will be changed as necessary as we discover more losses to use
     #     """
     #
-    #     pass
+    #     # mean squared error loss with regularization
+    #     return tf.where(A != 0, tf.multiply(lambda_1, tf.pow(A - tf.matmul(U, tf.transpose(V)), 2)),
+    #                     tf.multiply(lambda_2, tf.pow(-tf.matmul(U, tf.transpose(V)), 2)))
+    #
+    @tf.function
+    def loss(self, A, lambda_1=None, lambda_2=None, n_samples=None, loss_graph='mse'):
+        """
+        Arguments:\n
+        - loss_graph: a TeAMOFlow loss_graph object, this is a computational graph representing our loss function; please look in loss_graphs.py to see more info
+        - *args: a python iterable, contains custom inputs for certain loss functions
+        --- MSE: *args = lambda_1, lambda_2 (I recommend 0.01 and 0.001, respectively)
+        --- WMRB_1: *args = n_samples
 
-    def fit(self, A, epochs, optimizer, lambda_1=0.01, lambda_2=0.001, verbose=1):
+        Purpose:\n
+        - A loss function that will be incorporated into our computational graph in our training loop
+        - Returns an iterable containing the loss graph and all of its inputs
+        """
+
+        if loss_graph == 'mse':
+            return MSE().invoke_loss_graph(A, self.U, self.V, lambda_1=lambda_1, lambda_2=lambda_2, n_samples=n_samples)
+
+        if loss_graph == 'wmrb_1':
+            return WMRB_1().invoke_loss_graph(A, self.U, self.V, lambda_1=lambda_1, lambda_2=lambda_2, n_samples=n_samples)
+
+    def fit(self, A, epochs, optimizer, lambda_1=None, lambda_2=None, n_samples=None, loss_graph='mse', verbose=1):
         """
         Arguments:\n
         - A: an array with 2 axes, an interaction table between users and items\n
         - epochs: a python int, the number of times the model will train\n
         - optimizer: a tf.keras.optimizers object, the optimization algorithm used in the minimization of the loss\n
-        - lambda_1: a python float, the hyperparamater that weights the contribution of observed entries in the training\n
-        - lambda_2: a python float, the hyperparameter that weights the contribution of unobserved entries in the training\n
+        - *args: a python iterable, custom inputs for corresponding loss graphs; look at docstring for .loss method
         - verbose: a python int,\n
         --- 0: no information about training process printed\n
         --- 1: epoch number, loss, cumulative training runtime printed\n
@@ -103,11 +109,11 @@ class MatrixFactorization:
         # get history of losses and training parameters
         train_history, li_loss = {}, []
 
-        # recast hyperparameters as floats so we get no errors on ints
-        lambda_1, lambda_2 = float(lambda_1), float(lambda_2)
-
-        # recast hyperparameters as tf.constant objects so it can be incorporated into graph
-        lambda_1, lambda_2 = tf.constant(lambda_1), tf.constant(lambda_2)
+        # # recast hyperparameters as floats so we get no errors on ints
+        # lambda_1, lambda_2 = float(lambda_1), float(lambda_2)
+        #
+        # # recast hyperparameters as tf.constant objects so it can be incorporated into graph
+        # lambda_1, lambda_2 = tf.constant(lambda_1), tf.constant(lambda_2)
 
         total_time = 0
         for epoch in range(epochs):
@@ -118,7 +124,8 @@ class MatrixFactorization:
             with tf.GradientTape(persistent=True) as tape:
 
                 # initialize loss to take gradients
-                loss_fn = self.loss(A, self.U, self.V, lambda_1, lambda_2)
+                loss_fn = self.loss(A, lambda_1, lambda_2, n_samples, loss_graph=loss_graph)
+                # loss_fn = self.loss(A, self.U, self.V, lambda_1, lambda_2)
 
             # backpropagate to compute gradient
             dloss_dU, dloss_dV = tape.gradient(loss_fn, self.U), tape.gradient(loss_fn, self.V)
@@ -131,11 +138,11 @@ class MatrixFactorization:
             optimizer.apply_gradients(zip(li_grads, li_vars))
 
             # compute the total mean loss and end timer
-            epoch_loss = tf.reduce_mean(loss_fn).numpy()
+            epoch_loss = loss_fn.numpy()
             end = t.default_timer()
 
             # add a break in the training loop for when the loss is too low, we want to combat overfitting
-            if epoch_loss <= 1e-6:
+            if epoch_loss <= 1e-12:
                 break
 
             # put in key for train history, get loss from every epoch
