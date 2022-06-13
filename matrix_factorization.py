@@ -7,6 +7,7 @@
 import tensorflow as tf
 import numpy as np
 import timeit as t
+from loss_graphs import MSE, WMRB_1
 
 
 class MatrixFactorization:
@@ -68,6 +69,19 @@ class MatrixFactorization:
         # mean squared error loss with regularization
         return tf.where(A != 0, tf.multiply(lambda_1, tf.pow(A - tf.matmul(U, tf.transpose(V)), 2)),
                         tf.multiply(lambda_2, tf.pow(-tf.matmul(U, tf.transpose(V)), 2)))
+    #
+    # @tf.function
+    # def loss(self, loss_graph=MSE()):
+    #     """
+    #     Arguments:\n
+    #     - loss_graph: a TeAMOFlow loss_graph object, this is a computational graph representing our loss function; please look in loss_graphs.py to see more info
+    #
+    #     Purpose:\n
+    #     - A loss function that will be incorporated into our computational graph in our training loop
+    #     - Returns a tensorflow tensor (a constant)
+    #     """
+    #
+    #     pass
 
     def fit(self, A, epochs, optimizer, lambda_1=0.01, lambda_2=0.001, verbose=1):
         """
