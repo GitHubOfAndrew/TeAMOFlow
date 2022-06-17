@@ -5,6 +5,7 @@ import numpy as np
 from utils import random_sampler
 from abc import *
 
+
 class LossGraph(ABC):
     """
     This is an abstract base class to uniformize the serving of loss functions in our model framework. All loss functions should take in the interaction table, user, item embeddings, and extra arguments unique to each loss function.
@@ -15,11 +16,19 @@ class LossGraph(ABC):
         """
         As a method of an abstract base class, this does nothing. We will write subclasses of this ABC to share this method.\n
 
-        Arguments:
+        Arguments for every loss graph:\n
         - A: tensorflow tensor, the interaction table
         - U: tensorflow tensor, the user embedding matrix
         - V: tensorflow tensor, the item embedding matrix
-        - *args: extra arguments corresponding to the specific loss graphs
+
+        NOTE: Not all arguments are used when we call the .fit method in the MatrixFactorization class. We use this method as a template for all of the other types of loss graphs. When we implement a new loss graph, we can just simply set the irrelevant parameters to None
+
+        FOR MSE:\n
+        - lambda_1: python float, the constant weight for the observed interactions
+        - lambda_2: python float, the constant weight for the unobserved interactions
+
+        FOR WMRB_1:\n
+        - n_samples: python int, the number of user samples to take out of existing interactions
         """
         pass
 
@@ -33,10 +42,10 @@ class MSE(LossGraph):
 
     def invoke_loss_graph(self, A, U, V, lambda_1=0.01, lambda_2=0.001, n_samples=None):
         """
-        Extra Arguments:\n
-        - *args: unpacked iterable, for MSE, we input the hyperparameters lambda_1, lambda_2
+        Purpose:\n
+        - To compute the RMSE loss (to see the theoretical implementation, visit: https://developers.google.com/machine-learning/recommendation/collaborative/matrix)
+        - returns a tensorflow tensor (floating point value)
         """
-
         return tf.reduce_mean(tf.where(A != 0, tf.multiply(lambda_1, tf.pow(A - tf.matmul(U, tf.transpose(V)), 2)),
                         tf.multiply(lambda_2, tf.pow(-tf.matmul(U, tf.transpose(V)), 2))))
 
@@ -49,9 +58,6 @@ class WMRB_1(LossGraph):
 
     def invoke_loss_graph(self, A, U, V, lambda_1=None, lambda_2=None, n_samples=3):
         """
-        Extra Arguments:\n
-        - *args: unpacked iterable, for WRMB_1, we input n_samples
-
         Purpose:\n
         - To compute the WMRB loss (link to paper first introducing it: https://arxiv.org/pdf/1711.04015.pdf)
         - returns a tensorflow tensor (a floating point value)
