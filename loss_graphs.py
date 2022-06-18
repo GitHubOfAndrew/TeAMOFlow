@@ -79,3 +79,13 @@ class WMRB_1(LossGraph):
 
         return tf.math.log(1.0 + margin_rank)
 
+
+class WMRB_2(LossGraph):
+    """
+    Class meant to be an abstraction layer for the WMRB loss implemented in TensorRec (a fantastic recommender system framework created by James Kirk, link: https://github.com/jfkirk/tensorrec).
+
+    NOTE: This WMRB implementation is slightly different from the one in WMRB_1.
+    """
+
+    def invoke_loss_graph(self, A, U, V, lambda_1=None, lambda_2=None, n_samples=3):
+        pass
