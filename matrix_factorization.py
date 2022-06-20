@@ -228,29 +228,27 @@ class MatrixFactorization:
         ### get predicted interactions
         predicted_interactions = self.predict()
 
-        ### get indices for predictions by model
-        pred_indices = tf.where(A == 0)
+        # step 2: compute all necessary parameters for recall and precision
 
-        ### parse through predicted interactions to find all recommended items
-        li = []
-        for index, ind in enumerate(pred_indices.numpy()):
-            row, col = ind
-            li.append(((row, col), predicted_interactions[row, col].numpy()))
+        # collect all recommendations (predictions) made by the model
+        recommendations = tf.where(A == 0, predicted_interactions, 0.0)
 
-        ### sort the predictions in descending order
-        li.sort(key=lambda x: x[1], reverse=True)
+        # get number of recommended (predicted) items
+        num_rec_items = tf.math.count_nonzero(recommendations).numpy()
 
-        count_rel_rec_k = 0
-        for tuple_predicted in li[:k]:
-            indices, val = tuple_predicted
-            if val >= thresh:
-                count_rel_rec_k += 1
+        # collect all relevant (meets threshold) recommendations (predictions)
+        rel_recs = tf.where(recommendations >= thresh, recommendations, 0.0)
 
-        # step 2: compute the number of relevant items and number of recommended items
-        count_rec_items, count_rel_items = len(li), tf.reduce_sum(tf.where(A >= thresh, 1.0, 0.0)).numpy()
+        # get the number of top-k recommendations (predictions) that are relevant (meet the threshold)
+        rel_recs_flat = tf.reshape(rel_recs, shape=[-1])
+
+        num_rel_recs_top_k = tf.size(tf.math.top_k(rel_recs_flat, k=k).values).numpy()
+
+        # get the number of relevant items in all interactions
+        num_rel_items = tf.math.count_nonzero(tf.where(A >= thresh, 1.0, 0.0)).numpy()
 
         # step 3: compute precision at k, recall at k
-        precision_k, recall_k = count_rel_rec_k / count_rec_items, count_rel_rec_k / count_rel_items
+        precision_k, recall_k = num_rel_recs_top_k / num_rec_items, num_rel_recs_top_k / num_rel_items
 
         ### compute the f1 score at k as well
         f1_at_k = (2.0 * precision_k * recall_k) / (precision_k + recall_k)
