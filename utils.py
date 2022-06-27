@@ -1,6 +1,8 @@
 # THIS CONTAINS THE UTILITY FUNCTIONS NECESSARY FOR SOME OF OUR IMPLEMENTATIONS
 
 import numpy as np
+from scipy import sparse
+import tensorflow as tf
 
 # def random_sampler(n_items, n_users, n_samples, replace=False):
 #
@@ -26,3 +28,24 @@ import numpy as np
 #             sample_indices.append((user, item))
 #
 #     return np.array(sample_indices)
+
+def generate_random_interaction(n_users, n_items, density=0.50):
+    random_arr = np.round(5 * sparse.random(n_users, n_items, density=density).toarray())
+
+    scipy_random_arr = sparse.csr_matrix(random_arr)
+
+    # convert to tensorflow tensor
+
+    A = tf.constant(random_arr, dtype=tf.float32)
+
+    # get nonzero elements of sparse matrix
+
+    nonzero_vals = tf.constant(scipy_random_arr.data, dtype=tf.float32)
+
+    row, col = scipy_random_arr.nonzero()
+
+    nonzero_ind = np.array(list(map(np.array, zip(row, col))))
+
+    tf_interactions = tf.sparse.SparseTensor(indices=nonzero_ind, values=nonzero_vals, dense_shape=(n_users, n_items))
+
+    return tf_interactions, A
