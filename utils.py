@@ -49,3 +49,21 @@ def generate_random_interaction(n_users, n_items, density=0.50):
     tf_interactions = tf.sparse.SparseTensor(indices=nonzero_ind, values=nonzero_vals, dense_shape=(n_users, n_items))
 
     return tf_interactions, A
+
+
+def gather_matrix_indices(input_arr, index_arr):
+    """
+    :param input_arr: a tensorflow tensor, the tensor whose entries we are gathering
+    :param index_arr: a tensorflow tensor, the tensor of row-wise indices, must have same number of rows as input_arr
+    :return: a tensorflow tensor, the tensor containing the elements of input_arr that correspond to indices in index_arr
+
+    NOTE: No function exists in tensorflow to do this.
+    """
+    row, _ = input_arr.shape
+
+    li = []
+
+    for i in range(row):
+        li.append(tf.expand_dims(tf.gather(params=input_arr[i], indices=index_arr[i]), axis=0))
+
+    return tf.concat(li, axis=0)

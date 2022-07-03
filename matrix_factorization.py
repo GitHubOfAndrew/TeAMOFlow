@@ -9,10 +9,13 @@ import tensorflow as tf
 import numpy as np
 import timeit as t
 
-# our libraries
+# our libraries: other objects for this model
 from initializer_graphs import NormalInitializer
 from embedding_graphs import LinearEmbedding
 from loss_graphs import MSELoss
+
+# our libraries: utility/helper functions
+from utils import gather_matrix_indices
 
 
 class MatrixFactorization:
@@ -116,21 +119,40 @@ class MatrixFactorization:
 
     def recall_at_k(self, A, k=10):
         """
+        The recall at k here is computed according to this article: https://en.wikipedia.org/wiki/Evaluation_measures_(information_retrieval)#Recall
+
+        Furthermore, this recall_at_k is consistent with the definition of recall at k in the LightFM documentation as well: https://making.lyst.com/lightfm/docs/_modules/lightfm/evaluation.html#precision_at_k
+
+        Specifically, the recall at k refers to: for a user, the number of known positives in top k predictions / number of positives in top k
+
+        This function computes the recall @ k for each user. To find the total recall at k, just take the mean.
+
         :param A: tensorflow tensor: the interaction table
         :param k: a python int: the number of top items we want to see
-        :return: python float: the recall @ k which is = # of relevant recommended items in top k / # of relevant items
+        :return: tensorflow tensor: the recall @ k per user
 
         NOTE: In our case, 'relevant' is defined as a positive interaction, relevance is highly subjective however, please modify this as fit
         """
-        _, tf_predictions = self.predict(A)
+        # generate predictions and get positive predictions
+        predictions = self.predict()
+        positive_predictions = tf.where(predictions > 0.0, predictions, 0.0)
 
-        positive_predictions = tf.where(tf_predictions > 0, tf_predictions, 0.0)
+        # get the known positives
+        known_positives = tf.where(A > 0.0, A, 0.0)
 
-        rel_rec_items_k = tf.math.count_nonzero(tf.math.top_k(positive_predictions, k=k).values)
+        num_users, _ = positive_predictions.shape
 
-        rel_items = tf.math.count_nonzero(A)
+        # find the indices (items) corresponding to top k items per user
+        top_k_items_user = tf.math.top_k(positive_predictions, k=k).indices
 
-        return (rel_rec_items_k / rel_items).numpy()
+        # gather the entries of the interaction (A) according to the top k items per user (top_k_items_user)
+        res_top_k = gather_matrix_indices(A, top_k_items_user)
+
+        # count the number of known positive rated items per user
+        relevant = tf.math.count_nonzero(known_positives, axis=1, dtype=tf.float32)
+
+        # return number of known positive items in top k / number of positive items, per user
+        return tf.math.count_nonzero(res_top_k, axis=1, dtype=tf.float32) / relevant
 
     def precision_at_k(self, A, k=10):
         """
@@ -140,19 +162,24 @@ class MatrixFactorization:
 
         NOTE: In our case, 'relevant' is defined as a positive interaction
         """
-        _, tf_predictions = self.predict(A)
+        # functionality identical to recall_at_k...
+        predictions = self.predict()
+        positive_predictions = tf.where(predictions > 0.0, predictions, 0.0)
 
-        positive_predictions = tf.where(tf_predictions > 0, tf_predictions, 0.0)
+        num_users, _ = positive_predictions.shape
 
-        rel_rec_items_k = tf.math.count_nonzero(tf.math.top_k(positive_predictions, k=k).values)
+        top_k_items_user = tf.math.top_k(positive_predictions, k=k).indices
 
-        rec_items = tf.size(tf_predictions).numpy()
+        res_top_k = gather_matrix_indices(A, top_k_items_user)
 
-        return (rel_rec_items_k / rec_items).numpy()
+        # ... except that we do number of known positives in top k / k, per user
+        return tf.math.count_nonzero(res_top_k, axis=1, dtype=tf.float32) / k
 
     def f1_at_k(self, A, k=10, beta=1.0):
 
-        prec, rec = self.precision_at_k(A, k=k), self.recall_at_k(A, k=k)
+        precision, recall = self.precision_at_k(A, k=k), self.recall_at_k(A, k=k)
+
+        prec, rec = tf.reduce_mean(precision), tf.reduce_mean(recall)
 
         return ((1 + beta**2) * prec * rec) / (beta**2 * (prec + rec))
 
