@@ -29,8 +29,9 @@ import tensorflow as tf
 #
 #     return np.array(sample_indices)
 
-def generate_random_interaction(n_users, n_items, density=0.50):
-    random_arr = np.round(5 * sparse.random(n_users, n_items, density=density).toarray())
+
+def generate_random_interaction(n_users, n_items, max_entry=5.0, density=0.50):
+    random_arr = np.round(max_entry * sparse.random(n_users, n_items, density=density).toarray())
 
     scipy_random_arr = sparse.csr_matrix(random_arr)
 
