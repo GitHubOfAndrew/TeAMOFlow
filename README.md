@@ -61,6 +61,36 @@ In matrix factorization, since our main goal is to rank items according to user 
 
 For more detail into what precision and recall are, visit: https://en.wikipedia.org/wiki/Evaluation_measures_(information_retrieval)
 
+## Benchmark Results
+
+We ensure the validity of the matrix factorization model by evaluating its performance on benchmark datasets. 
+
+The MovieLens 100k dataset is data containing movies, users, and features about the movies, users and their interactions (user ratings of movies). As the name suggests, the dataset has about 100k nonzero ratings of movies by users, which we deem to be interactions.
+
+The code to test our model out on this dataset is given in the file 'benchmarking_ML.py'. We will not implement it on this page, but we will show the results below for the following configuration:
+
+```
+# the dimension of the range of the embedding
+n_components = 5
+
+# number of epochs to optimize the model
+epochs = 100
+
+# learning rate for the optimizer (Adam)
+learning_rate = 1e-3
+
+# user and item features; both set as identity matrices for baseline benchmarking purposes
+user_features = tf.eye(n_users)
+
+item_features = tf.eye(n_items)
+```
+
+<img width="385" alt="TeAMOFlow MF benchmark N_comp-5 lr-1e-3 img2" src="https://user-images.githubusercontent.com/85316690/177402367-a7008d12-8e89-46de-a956-c5df54e59b96.PNG">
+
+Although far from optimal (on average, there's a 0.11% chance that a user gets an item that they like in the predictions), this does give us a baseline for the performance of this model. Given the scale of the data, this 0.11% is more significant than it seems.
+
+**Note:** Results may vary due to differences in hardware and environment configurations.
+
 ## Acknowledgments
 
 We would like to acknowledge the efforts of James Kirk and his fantastic project **Tensorrec** (link: https://github.com/jfkirk/tensorrec), from which this project took inspiration from. In fact, this project came out as an effort to adopt Tensorrec for the TensorFlow 2.x environment (as that library was written on TensorFlow 1.x). By no means are the ideas behind this work original, they are from many fantastic tutorials and academic research done in the field. Please contact me if I have violated any policies regarding fair use or plagiarism.
