@@ -88,7 +88,7 @@ user_features = tf.eye(n_users)
 item_features = tf.eye(n_items)
 ```
 
-<img width="385" alt="TeAMOFlow MF benchmark N_comp-5 lr-1e-3 img2" src="https://user-images.githubusercontent.com/85316690/177404523-d1d8e6e6-26c4-4432-8370-fd3fb40504ae.PNG">
+<img width="407" alt="TeAMOFlow MF benchmark N_comp-5 lr-1e-3 pt 2 img 2" src="https://user-images.githubusercontent.com/85316690/177405951-67104365-2d27-4464-9293-3dde05baf9ce.PNG">
 
 Although far from optimal (on all ratings >= 4, there's a 0.14% chance that a user gets an item that they like in the top 10 predictions [recall @ 10]), this does give us a baseline for the performance of this model. Given the scale of the data however, this 0.14% is more significant than it seems. The configuration of this model is the most basic possible configuration (MSE loss, un-biased linear embeddings, normal initialization).
 
