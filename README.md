@@ -73,6 +73,9 @@ The code to test our model out on this dataset is given in the file 'benchmarkin
 # the dimension of the range of the embedding
 n_components = 5
 
+# initialize model with default embedding, loss, initializer graphs
+model = MatrixFactorization(n_components)
+
 # number of epochs to optimize the model
 epochs = 100
 
@@ -85,9 +88,11 @@ user_features = tf.eye(n_users)
 item_features = tf.eye(n_items)
 ```
 
-<img width="385" alt="TeAMOFlow MF benchmark N_comp-5 lr-1e-3 img2" src="https://user-images.githubusercontent.com/85316690/177402367-a7008d12-8e89-46de-a956-c5df54e59b96.PNG">
+<img width="385" alt="TeAMOFlow MF benchmark N_comp-5 lr-1e-3 img2" src="https://user-images.githubusercontent.com/85316690/177404523-d1d8e6e6-26c4-4432-8370-fd3fb40504ae.PNG">
 
-Although far from optimal (on average, there's a 0.11% chance that a user gets an item that they like in the predictions), this does give us a baseline for the performance of this model. Given the scale of the data, this 0.11% is more significant than it seems.
+Although far from optimal (on all ratings >= 4, there's a 0.14% chance that a user gets an item that they like in the top 10 predictions [recall @ 10]), this does give us a baseline for the performance of this model. Given the scale of the data however, this 0.14% is more significant than it seems. The configuration of this model is the most basic possible configuration (MSE loss, un-biased linear embeddings, normal initialization).
+
+I check the consistency of these results by referring to a previous benchmark demonstrated by James Kirk (creator of Tensorrec [look in *Acknowledgements*]), run with my exact configurations above, in this article: https://towardsdatascience.com/getting-started-with-recommender-systems-and-tensorrec-8f50a9943eef). 
 
 **Note:** Results may vary due to differences in hardware and environment configurations.
 
