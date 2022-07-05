@@ -152,7 +152,12 @@ class MatrixFactorization:
         relevant = tf.math.count_nonzero(known_positives, axis=1, dtype=tf.float32)
 
         # return number of known positive items in top k / number of positive items, per user
-        return tf.math.count_nonzero(res_top_k, axis=1, dtype=tf.float32) / relevant
+        recall = tf.math.count_nonzero(res_top_k, axis=1, dtype=tf.float32) / relevant
+
+        # check for null recall values and set it to 0
+        nan_mask = tf.math.is_nan(recall)
+
+        return tf.where(nan_mask == False, recall, 0.0)
 
     def precision_at_k(self, A, k=10):
         """
@@ -176,10 +181,25 @@ class MatrixFactorization:
         return tf.math.count_nonzero(res_top_k, axis=1, dtype=tf.float32) / k
 
     def f1_at_k(self, A, k=10, beta=1.0):
+        """
+        :param A: a tensorflow tensor: the interaction table
+        :param k: a python int: the number of top predictions to use in judging
+        :param beta: a python float: a weighting parameter that influences the contribution of precision vs. recall
+        :return: a python float: the f1 score @ k, a harmonic mean of precision @ k and recall @ k metrics
+        """
 
         precision, recall = self.precision_at_k(A, k=k), self.recall_at_k(A, k=k)
 
         prec, rec = tf.reduce_mean(precision), tf.reduce_mean(recall)
 
         return ((1 + beta**2) * prec * rec) / (beta**2 * (prec + rec))
+
+
+    def save_model(self):
+        """
+        Method to save the model.
+        
+        :return: a python dictionary: a configuration file containing all the necessary attributes about this model
+        """
+        pass
 
