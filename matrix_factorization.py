@@ -201,5 +201,8 @@ class MatrixFactorization:
         
         :return: a python dictionary: a configuration file containing all the necessary attributes about this model
         """
-        pass
+
+        dict_config = {'User Embedding': self.user_embedding, 'Item Embedding': self.item_embedding, 'Embedding Dimension': self.n_components}
+
+        return dict_config
 
