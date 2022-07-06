@@ -1,5 +1,5 @@
 # THIS FILE IS MEANT TO BE FOR BENCHMARKING PURPOSES OF VARIOUS CONFIGURATIONS OF MATRIX FACTORIZATION MODEL
-# LOAD AND RUN MODEL ON: MOVIELENS 100K DATASET
+# LOAD AND RUN MODEL ON: MOVIELENS 100K DATASET, link to dataset: https://grouplens.org/datasets/movielens/100k/, extract it and then put the csv's inside a directory called 'ml-latest-small' in the same folder as this one
 # CREDIT: THE LOADING OF THIS DATASET IS TAKEN FROM TENSORREC (BY JAMES KIRK, THE FILE IS CALLED getting_started.py)
 
 # base libraries
