@@ -66,8 +66,11 @@ class MatrixFactorization:
                 user_embedding = self.user_repr_graph.get_repr(user_features, U)
                 item_embedding = self.item_repr_graph.get_repr(item_features, V)
 
+                # generate predictions to trace the embeddings in autograph
+                predictions = tf.matmul(user_embedding, tf.transpose(item_embedding))
+
                 # compute loss
-                loss_fn = self.loss_graph.get_loss(tf_interactions, user_embedding, item_embedding)
+                loss_fn = self.loss_graph.get_loss(tf_interactions, predictions)
 
             dloss_dU = tape.gradient(loss_fn, U)
             dloss_dV = tape.gradient(loss_fn, V)
