@@ -15,7 +15,7 @@ from embedding_graphs import LinearEmbedding
 from loss_graphs import MSELoss
 
 # our libraries: utility/helper functions
-from utils import gather_matrix_indices
+from utils import gather_matrix_indices, random_sampler
 
 
 class MatrixFactorization:
@@ -23,7 +23,7 @@ class MatrixFactorization:
     A class representing the standard matrix factorization model. It admits custom loss functions, embeddings, weight initializers.
     """
 
-    def __init__(self, n_components, user_repr_graph=LinearEmbedding(), item_repr_graph=LinearEmbedding(), loss_graph=MSELoss(), user_weight_graph=NormalInitializer(), item_weight_graph=NormalInitializer()):
+    def __init__(self, n_components, user_repr_graph=LinearEmbedding(), item_repr_graph=LinearEmbedding(), loss_graph=MSELoss(), user_weight_graph=NormalInitializer(), item_weight_graph=NormalInitializer(), n_users=None, n_items=None, n_samples=None, generate_sample=False):
         """
         :param n_components: a python int: represents the number of latent features our item and user embeddings share
         :param user_repr_graph: an instance of Embeddings(): the graph that will embed the user features into a space of dimension n_components
@@ -32,6 +32,8 @@ class MatrixFactorization:
         :param user_weight_graph: an instance of Initializer(): the graphs that will initialize the weights to be used in user embedding
         :param item_weight_graph: an instance of Initializer(): the graphs that will initialize the weights to be used in item embedding
         """
+
+        # initialize graphs for training and evaluation
         self.n_components = n_components
         self.user_repr_graph = user_repr_graph
         self.item_repr_graph = item_repr_graph
@@ -39,7 +41,21 @@ class MatrixFactorization:
         self.user_weight_graph = user_weight_graph
         self.item_weight_graph = item_weight_graph
 
-    def fit(self, epochs, user_features, item_features, tf_interactions, lr=1e-2):
+        # check if the model is a sampled-based model
+        self.n_users = n_users
+        self.n_items = n_items
+        self.n_samples = n_samples
+        self.random_ind = None
+
+        # if n_items is given, but n_samples is not specified, take half of the total number of items
+        if n_samples is None and n_items is not None:
+            self.n_samples = n_items // 2
+
+        # do random sampling without replacement if generate_sample flag is true
+        if generate_sample == True:
+            self.random_ind = random_sampler(n_items, n_users, n_samples)
+
+    def fit(self, epochs, user_features, item_features, tf_interactions, is_sample_based=False, lr=1e-2):
         """
         :param epochs: python int: the number of iterations to perform optimization
         :param user_features: tensorflow tensor: the user features that are available to help perform the predictions
@@ -69,8 +85,19 @@ class MatrixFactorization:
                 # generate predictions to trace the embeddings in autograph
                 predictions = tf.matmul(user_embedding, tf.transpose(item_embedding))
 
-                # compute loss
-                loss_fn = self.loss_graph.get_loss(tf_interactions, predictions)
+                # check if model is sample-based
+                if is_sample_based == True:
+                    tf_sample_predictions = gather_matrix_indices(predictions, self.random_ind)
+                    tf_prediction_serial = tf.gather_nd(params=predictions, indices=tf_interactions.indices)
+                    predictions = None
+                else:
+                    tf_sample_predictions = None
+                    tf_prediction_serial = None
+
+                # compute loss (if sample_based == True, use WMRB loss)
+                loss_fn = self.loss_graph.get_loss(tf_interactions=tf_interactions, tf_sample_predictions=tf_sample_predictions,
+                                                   tf_prediction_serial=tf_prediction_serial, predictions=predictions,
+                                                   n_items=self.n_items, n_samples=self.n_samples)
 
             dloss_dU = tape.gradient(loss_fn, U)
             dloss_dV = tape.gradient(loss_fn, V)
@@ -146,7 +173,7 @@ class MatrixFactorization:
         num_users, _ = positive_predictions.shape
 
         # find the indices (items) corresponding to top k items per user
-        top_k_items_user = tf.math.top_k(positive_predictions, k=k).indices
+        top_k_items_user = tf.cast(tf.math.top_k(positive_predictions, k=k).indices, dtype=tf.int64)
 
         # gather the entries of the interaction (A) according to the top k items per user (top_k_items_user)
         res_top_k = gather_matrix_indices(A, top_k_items_user)
@@ -176,7 +203,7 @@ class MatrixFactorization:
 
         num_users, _ = positive_predictions.shape
 
-        top_k_items_user = tf.math.top_k(positive_predictions, k=k).indices
+        top_k_items_user = tf.cast(tf.math.top_k(positive_predictions, k=k).indices, dtype=tf.int64)
 
         res_top_k = gather_matrix_indices(A, top_k_items_user)
 

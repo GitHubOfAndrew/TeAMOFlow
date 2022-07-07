@@ -14,9 +14,13 @@ class LossGraph(ABC):
     @abstractmethod
     def get_loss(self, tf_interactions, tf_sample_predictions, tf_prediction_serial, predictions, n_items, n_samples):
         """
-        :param tf_interactions: a tf.sparse.SparseTensor object, (i.e. a sparse tensor): represents the interaction table in sparse tensor form, of dense shape [n_users, n_items]
-        :param predictions: a tf tensor: the predictions computed from the user and item embeddings
-        :return: a tensorflow tensor: vector containing the loss functions, the vector's dimensionality is equivalent to the number of nonzero entries in tf_interactions
+        :param tf_interactions: a tensorflow sparse tensor: the sparse tensor containing the observed interactions, dense shape should be [n_users, n_items]
+        :param tf_sample_predictions: a tensorflow tensor: the predictions of the model corresponding to the sampled items per user, it is of shape [n_users, n_samples]
+        :param tf_prediction_serial: a tensorflow tensor: the predictions corresponding to the observed interactions, it is of shape [nonzero_interactions, 1]
+        :param predictions: a tensorflow tensor: the full set of predictions
+        :param n_items: a python int: the number of items
+        :param n_samples: a python int: the number of sampled items
+        :return:
         """
         pass
 
@@ -27,7 +31,15 @@ class MSELoss(LossGraph):
     """
 
     def get_loss(self, tf_interactions, predictions, tf_sample_predictions=None, tf_prediction_serial=None, n_items=None, n_samples=None):
-
+        """
+        :param tf_interactions:
+        :param predictions:
+        :param tf_sample_predictions:
+        :param tf_prediction_serial:
+        :param n_items:
+        :param n_samples:
+        :return:
+        """
         # this is an array of indices corresponding to nonzeros in tf_interactions
         nonzero_ind = tf_interactions.indices
 
@@ -39,16 +51,33 @@ class MSELoss(LossGraph):
 
 class WMRBLoss(LossGraph):
     """
-    The Weighted-Margin Rank Batch Loss (WMRB). This is a direct implementation of https://arxiv.org/pdf/1711.04015.pdf for only positive interactions
+    The Weighted-Margin Rank Batch Loss (WMRB). This is a direct implementation of https://arxiv.org/pdf/1711.04015.pdf for only positive interactions.
     """
 
-    def get_loss(self, tf_interactions, tf_sample_predictions, tf_prediction_serial, n_items, n_sampled_items, predictions=None):
+    def get_loss(self, tf_interactions, tf_sample_predictions, tf_prediction_serial, n_items, n_samples, predictions=None):
         """
         :param tf_interactions:
         :param tf_sample_predictions:
         :param tf_prediction_serial:
         :param n_items:
-        :param n_sampled_items:
+        :param n_samples:
+        :param predictions:
         :return:
         """
-        pass
+        # this wmrb only takes into account positive interactions, ignores all negative interactions
+
+        positive_interaction_mask = tf.greater(tf_interactions.values, 0.0)
+
+        positive_interaction_indices = tf.boolean_mask(tf_interactions.indices, positive_interaction_mask)
+
+        positive_predictions = tf.boolean_mask(tf_prediction_serial, positive_interaction_mask)
+
+        mapped_predictions_sample_per_interaction = tf.gather(params=tf_sample_predictions,
+                                                              indices=tf.transpose(positive_interaction_indices)[0])
+
+        summation_term = tf.maximum(
+            1.0 - tf.expand_dims(positive_predictions, axis=1) + mapped_predictions_sample_per_interaction, 0.0)
+
+        sampled_margin_rank = (n_items / n_samples) * tf.reduce_sum(summation_term, axis=1)
+
+        return tf.math.log(1.0 + sampled_margin_rank)

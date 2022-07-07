@@ -4,30 +4,20 @@ import numpy as np
 from scipy import sparse
 import tensorflow as tf
 
-# def random_sampler(n_items, n_users, n_samples, replace=False):
-#
-#     """
-#     Arguments:\n
-#     - n_items: python int, the number of items
-#     - n_users: python int, the number of users
-#     - n_samples: python int, the number of user samples
-#     - replace: python boolean, whether we sample with replacement or without\n
-#     NOTE: we should almost always sample without replacement as we will get duplicate indices
-#
-#    Purpose:\n
-#    - Randomly sample indices from our existing interaction table
-#    - Returns a numpy array of sampled indices
-#     """
-#
-#     items_per_user = [np.random.choice(a=n_items, size=n_samples, replace=replace) for _ in range(n_users)]
-#
-#     sample_indices = []
-#
-#     for user, user_items in enumerate(items_per_user):
-#         for item in user_items:
-#             sample_indices.append((user, item))
-#
-#     return np.array(sample_indices)
+
+def random_sampler(n_items, n_users, n_samples, replace=False):
+
+    """
+    :param n_items: python int: number of items in interactions
+    :param n_users: python int: number of users in interactions
+    :param n_samples: python int: number of item samples
+    :param replace: python boolean: whether to sample items by replacement or not
+    :return: tensorflow tensor: contains n_samples sampled items per user
+    """
+
+    items_per_user = [np.random.choice(a=n_items, size=n_samples, replace=replace) for _ in range(n_users)]
+
+    return tf.constant(np.array(items_per_user), dtype=tf.int64)
 
 
 def generate_random_interaction(n_users, n_items, max_entry=5.0, density=0.50):
@@ -60,11 +50,16 @@ def gather_matrix_indices(input_arr, index_arr):
 
     NOTE: No function exists in tensorflow to do this.
     """
-    row, _ = input_arr.shape
+    row_shape, col_shape = index_arr.shape
 
-    li = []
+    # expand column indices
+    test_col_ind = index_arr[:, :, tf.newaxis]
 
-    for i in range(row):
-        li.append(tf.expand_dims(tf.gather(params=input_arr[i], indices=index_arr[i]), axis=0))
+    # create row indices
+    test_row_ind = tf.repeat(tf.range(row_shape, dtype=tf.int64)[:, tf.newaxis, tf.newaxis], col_shape, axis=1)
 
-    return tf.concat(li, axis=0)
+    # put row and column indices together
+    test_ind = tf.concat([test_row_ind, test_col_ind], axis=-1)
+
+    return tf.gather_nd(indices=test_ind, params=input_arr)
+
