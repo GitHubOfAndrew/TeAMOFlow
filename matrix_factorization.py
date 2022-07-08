@@ -3,6 +3,8 @@
 # - WE DO NOT HAVE TO CREATE A COMPUTATIONAL GRAPH SEPARATELY, AS THE EAGER EXECUTION
 # AND AUTOGRAPH WILL AUTOMATICALLY INCORPORATE ANY TENSORFLOW METHODS INTO THE GRAPH
 # - THIS RUNS ONLY ON TENSORFLOW 2.5+, USE AT YOUR OWN RISK
+# This is based on a library of James Kirk's, called TensorRec (https://github.com/jfkirk/tensorrec/). Consider this a spiritual successor to TensorRec written in tensorflow 2.x.
+
 
 # base libraries
 import tensorflow as tf

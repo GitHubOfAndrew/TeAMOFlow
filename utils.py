@@ -8,6 +8,8 @@ import tensorflow as tf
 def random_sampler(n_items, n_users, n_samples, replace=False):
 
     """
+    Generates the sampled column indices (items) per row (user). This should be a matrix of shape [n_users, n_samples]
+
     :param n_items: python int: number of items in interactions
     :param n_users: python int: number of users in interactions
     :param n_samples: python int: number of item samples
@@ -44,11 +46,35 @@ def generate_random_interaction(n_users, n_items, max_entry=5.0, density=0.50):
 
 def gather_matrix_indices(input_arr, index_arr):
     """
+    This method takes in column indices per row, indicated in index_arr, and gathers the respective entries in the row and column of index_arr, of input_arr.
+
+    For example:
+
+    input_arr = tf.constant([[1,4,2],
+                             [5,7,8],
+                             [6,2,1]], dtype=tf.float32)
+
+    index_arr = tf.constant([[0,2,0],
+                             [2,2,2]
+                             [2,1,0], dtype=tf.int64]
+
+    Now call this method:
+
+    result = gather_matrix_indices(input_arr, index_arr)
+
+    And it results in:
+
+    result = tf.constant([[1, 2, 1],
+                          [8, 8, 8],
+                          [1, 2, 6]], dtype=tf.float32)
+
+
+
     :param input_arr: a tensorflow tensor, the tensor whose entries we are gathering
     :param index_arr: a tensorflow tensor, the tensor of row-wise indices, must have same number of rows as input_arr
     :return: a tensorflow tensor, the tensor containing the elements of input_arr that correspond to indices in index_arr
 
-    NOTE: No function exists in tensorflow to do this.
+    NOTE: No function exists in tensorflow to do this in one function call.
     """
     row_shape, col_shape = index_arr.shape
 

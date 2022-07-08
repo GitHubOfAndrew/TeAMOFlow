@@ -52,6 +52,8 @@ class MSELoss(LossGraph):
 class WMRBLoss(LossGraph):
     """
     The Weighted-Margin Rank Batch Loss (WMRB). This is a direct implementation of https://arxiv.org/pdf/1711.04015.pdf for only positive interactions.
+
+    This implementation is a direct result of James Kirk's work in TensorRec (https://github.com/jfkirk/tensorrec/blob/master/tensorrec/loss_graphs.py). My main contribution is in making the workflow/terms in this function clearer and in making the arguments clearer.
     """
 
     def get_loss(self, tf_interactions, tf_sample_predictions, tf_prediction_serial, n_items, n_samples, predictions=None):
