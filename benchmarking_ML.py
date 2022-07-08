@@ -15,6 +15,7 @@ import random
 # our libraries
 
 from matrix_factorization import MatrixFactorization
+from loss_graphs import WMRBLoss
 from input_utils import *
 
 
@@ -84,9 +85,18 @@ if run == True:
 
     # initialize model
     n_users, n_items = A_train.shape
+    n_sampled_items = n_items // 2
     n_components = 5
     epochs = 100
+
+    # WE WILL BE TRAINING BOTH MSE AND WMRB MODELS WITH THE SAME FEATURES AND HYPERPARAMETERS TO COMPARE PERFORMANCE
+
+    # mse model
     model_ml_100k = MatrixFactorization(n_components)
+
+    # WMRB model
+    model_ml_100k_wmrb = MatrixFactorization(n_components, loss_graph=WMRBLoss(), n_users=n_users, n_items=n_items,
+                                             n_samples=n_sampled_items, generate_sample=True)
 
     # initialize indicator features
 
@@ -97,35 +107,41 @@ if run == True:
     # fit model
     model_ml_100k.fit(epochs, user_features, item_features, tf_train, lr=1e-3)
 
+    model_ml_100k_wmrb.fit(epochs, user_features, item_features, tf_train, is_sample_based=True, lr=1e-3)
+
     # score model
     k = 10
     recall_train = model_ml_100k.recall_at_k(A_train, k)
-    precision_train = model_ml_100k.precision_at_k(A_train, k)
+    recall_train_2 = model_ml_100k_wmrb.recall_at_k(A_train, k)
+    # precision_train = model_ml_100k.precision_at_k(A_train, k)
 
-    print(f'Recall @ 10 on training set: {tf.reduce_mean(recall_train).numpy()}')
-    print(f'Precision @ 10 on training set: {tf.reduce_mean(precision_train).numpy()}')
+    print(f'Recall @ 10 on training set w/ MSE: {tf.reduce_mean(recall_train).numpy()}')
+    print(f'Recall @ 10 on training set w/ WMRB: {tf.reduce_mean(recall_train_2).numpy()}')
     print('\n')
 
     recall_test = model_ml_100k.recall_at_k(A_test, k)
-    precision_test = model_ml_100k.precision_at_k(A_test, k)
-    print(f'Recall @ 10 on testing set: {tf.reduce_mean(recall_test).numpy()}')
-    print(f'Precision @ 10 on testing set: {tf.reduce_mean(precision_test).numpy()}')
+    recall_test_2 = model_ml_100k_wmrb.recall_at_k(A_test, k)
+    # precision_test = model_ml_100k.precision_at_k(A_test, k)
+    print(f'Recall @ 10 on testing set w/ MSE: {tf.reduce_mean(recall_test).numpy()}')
+    print(f'Recall @ 10 on testing set w/ WMRB: {tf.reduce_mean(recall_test_2).numpy()}')
     print('\n')
 
     recall_train_4plus = model_ml_100k.recall_at_k(A_train_4plus, k)
-    precision_train_4plus = model_ml_100k.precision_at_k(A_train_4plus, k)
-    print(f'Recall @ 10 on training set (ratings >= 4): {tf.reduce_mean(recall_train_4plus).numpy()}')
-    print(f'Precision @ 10 on training set (ratings >= 4): {tf.reduce_mean(precision_train_4plus).numpy()}')
+    recall_train_4plus_2 = model_ml_100k_wmrb.recall_at_k(A_train_4plus, k)
+    # precision_train_4plus = model_ml_100k.precision_at_k(A_train_4plus, k)
+    print(f'Recall @ 10 on training set (ratings >= 4) w/ MSE: {tf.reduce_mean(recall_train_4plus).numpy()}')
+    print(f'Recall @ 10 on training set (ratings >= 4) w/ WMRB: {tf.reduce_mean(recall_train_4plus_2).numpy()}')
     print('\n')
 
     recall_test_4plus = model_ml_100k.recall_at_k(A_test_4plus, k)
-    precision_test_4plus = model_ml_100k.precision_at_k(A_test_4plus, k)
-    print(f'Recall @ 10 on testing set (ratings >= 4): {tf.reduce_mean(recall_test_4plus).numpy()}')
-    print(f'Precision @ 10 on testing set (ratings >= 4): {tf.reduce_mean(precision_test_4plus).numpy()}')
-    print('\n')
+    recall_test_4plus_2 = model_ml_100k_wmrb.recall_at_k(A_test_4plus, k)
+    # precision_test_4plus = model_ml_100k.precision_at_k(A_test_4plus, k)
+    print(f'Recall @ 10 on testing set (ratings >= 4) w/ MSE: {tf.reduce_mean(recall_test_4plus).numpy()}')
+    print(f'Recall @ 10 on testing set (ratings >= 4) w/ WMRB: {tf.reduce_mean(recall_test_4plus_2).numpy()}')
+    # print('\n')
 
-    recall_test_4plus_at_5 = model_ml_100k.recall_at_k(A_test_4plus, k=5)
-    precision_test_4plus_at_5 = model_ml_100k.precision_at_k(A_test_4plus, k=5)
-    print(f'Recall @ 5 on testing set (ratings >= 4): {tf.reduce_mean(recall_test_4plus_at_5).numpy()}')
-    print(f'Precision @ 5 on testing set (ratings >= 4): {tf.reduce_mean(precision_test_4plus_at_5).numpy()}')
+    # recall_test_4plus_at_5 = model_ml_100k.recall_at_k(A_test_4plus, k=5)
+    # precision_test_4plus_at_5 = model_ml_100k.precision_at_k(A_test_4plus, k=5)
+    # print(f'Recall @ 5 on testing set (ratings >= 4): {tf.reduce_mean(recall_test_4plus_at_5).numpy()}')
+    # print(f'Precision @ 5 on testing set (ratings >= 4): {tf.reduce_mean(precision_test_4plus_at_5).numpy()}')
 
