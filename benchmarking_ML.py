@@ -83,11 +83,14 @@ if run == True:
     A_train_4plus = tf.constant(train_np_4plus, dtype=tf.float32)
     A_test_4plus = tf.constant(test_np_4plus, dtype=tf.float32)
 
+    # fit wmrb with 4+ ratings
+    tf_train_4plus = convert_to_tf_sparse(train_np_4plus)
+
     # initialize model
     n_users, n_items = A_train.shape
-    n_sampled_items = n_items // 2
+    n_sampled_items = n_items // 10
     n_components = 5
-    epochs = 100
+    epochs = 200
 
     # WE WILL BE TRAINING BOTH MSE AND WMRB MODELS WITH THE SAME FEATURES AND HYPERPARAMETERS TO COMPARE PERFORMANCE
 
@@ -107,7 +110,7 @@ if run == True:
     # fit model
     model_ml_100k.fit(epochs, user_features, item_features, tf_train, lr=1e-3)
 
-    model_ml_100k_wmrb.fit(epochs, user_features, item_features, tf_train, is_sample_based=True, lr=1e-3)
+    model_ml_100k_wmrb.fit(epochs, user_features, item_features, tf_train_4plus, is_sample_based=True)
 
     # score model
     k = 10

@@ -149,7 +149,7 @@ class MatrixFactorization:
 
         return tf_indices_ranks
 
-    def recall_at_k(self, A, k=10):
+    def recall_at_k(self, A, k=10, preserve_rows=False):
         """
         The recall at k here is computed according to this article: https://en.wikipedia.org/wiki/Evaluation_measures_(information_retrieval)#Recall
 
@@ -161,6 +161,7 @@ class MatrixFactorization:
 
         :param A: tensorflow tensor: the interaction table
         :param k: a python int: the number of top items we want to see
+        :param preserve_rows: a python boolean: if false, then take out the users who have 0 interactions from the computation, otherwise, include all users
         :return: tensorflow tensor: the recall @ k per user
 
         NOTE: In our case, 'relevant' is defined as a positive interaction, relevance is highly subjective however, please modify this as fit
@@ -183,18 +184,29 @@ class MatrixFactorization:
         # count the number of known positive rated items per user
         relevant = tf.math.count_nonzero(known_positives, axis=1, dtype=tf.float32)
 
-        # return number of known positive items in top k / number of positive items, per user
-        recall = tf.math.count_nonzero(res_top_k, axis=1, dtype=tf.float32) / relevant
+        # count the number of known positive items in top k predictions, per user
+        hits = tf.math.count_nonzero(res_top_k, axis=1, dtype=tf.float32)
 
-        # check for null recall values and set it to 0
-        nan_mask = tf.math.is_nan(recall)
+        # if preserve_rows is true, then we will set the recall of users with no interactions to 0
+        # otherwise, we take out any users with no interactions
+        if not preserve_rows:
+            zero_interaction_mask = tf.math.not_equal(relevant, 0.0)
+            masked_hits = tf.boolean_mask(hits, zero_interaction_mask)
+            masked_relevant = tf.boolean_mask(relevant, zero_interaction_mask)
+            return masked_hits / masked_relevant
+        else:
+            # return number of known positive items in top k / number of positive items, per user
+            recall = hits / relevant
 
-        return tf.where(nan_mask == False, recall, 0.0)
+            # check for null recall values and set it to 0
+            nan_mask = tf.math.is_nan(recall)
+            return tf.where(nan_mask == False, recall, 0.0)
 
-    def precision_at_k(self, A, k=10):
+    def precision_at_k(self, A, k=10, preserve_rows=False):
         """
         :param A: tensorflow tensor: the interaction table
         :param k: python int: number of top items we want to see
+        :param preserve_rows: a python boolean: if false, then take out the users who have 0 interactions from the computation, otherwise, include all users
         :return: python float: the precision @ k which is = # of relevant recommended items in top k / # of recommendations
 
         NOTE: In our case, 'relevant' is defined as a positive interaction
@@ -209,8 +221,17 @@ class MatrixFactorization:
 
         res_top_k = gather_matrix_indices(A, top_k_items_user)
 
+        hits = tf.math.count_nonzero(res_top_k, axis=1, dtype=tf.float32)
+
+        # if preserve_rows is false, we take out any users with no interactions, otherwise, include all users
+        if not preserve_rows:
+            relevant = tf.math.count_nonzero(tf.where(A > 0.0, A, 0.0), axis=1, dtype=tf.float32)
+            zero_int_mask = tf.math.not_equal(relevant, 0.0)
+            masked_hits = tf.boolean_mask(hits, zero_int_mask)
+            return masked_hits / k
         # ... except that we do number of known positives in top k / k, per user
-        return tf.math.count_nonzero(res_top_k, axis=1, dtype=tf.float32) / k
+        else:
+            return hits / k
 
     def f1_at_k(self, A, k=10, beta=1.0):
         """
