@@ -24,6 +24,52 @@ We achieve these as follows:
 
 While the primary object of focus is the matrix factorization component, I named it "TeAMOFlow" for a reason: I hope to expand this library to encompass all kinds of matrix/tensor-based machine learning models. I intend for this library to have implementations from machine learning literature that are not commonly found in other similar libraries. This investigative spirit and willingness to experiment is something I encourage to myself, and to everyone.
 
+## Currently Available
+
+The following features are currently available in our library.
+
+**Loss Functions**:
+
+TeAMOFlow currently offers two choices of loss function.
+
+1) Mean Squared Error Loss
+
+2) Weighted Margin Rank Batch Loss (WMRB)
+
+The MSE Loss is a regression-type loss that tries to explicitly predict the ratings of a user-item interaction. The WMRB Loss is a ranking-based loss that tries to predict the ranking order of certain items over others, per user. 
+
+**Embeddings**:
+
+There's currently only one choice of embedding.
+
+1) Unbiased Linear Embedding.
+
+This is the simplest possible embedding and is a linear function of the features.
+
+**Initializations**:
+
+TeAMOFlow handles weight initializations in a separate module (because we think that weight initialization makes a huge difference in a ranking task such as this one). We currently offer two choices of initialization.
+
+1) Normalized normal initialization.
+
+2) Normalized uniform initialization.
+
+The normalized normal initialization is a weight matrix consisting of normalized, normally-distributed (mean = 0.0, std = 1.0) entries. Likewise for the normalized uniform initialization (except the entries are uniformly distributed in the unit interval).
+
+**Predictions**:
+
+There's currently only one choice of prediction graph.
+
+1) Dot Product Prediction.
+
+This is the canonical example of a prediction in the matrix factorization space. It is a vectorized computation to obtain a similarity score between all users and all items. These reflect both magnitude and sign of ratings (although this may not always be necessary, nor desirable).
+
+**Input Pipeline**:
+
+We intend for there to be flexibility in terms of how our model admits input data. Currently, the matrix factorization object takes in a tf.sparse tensor for training, and a tf.tensor for evaluation. This is not scalable for larger systems, so we will explore the tf.data API in a future update.
+
+Note: **These are the current configurations as of 2022-07-09. We will update this readme as more features get incorporated.**
+
 ## Demonstration of Matrix Factorization Model
 
 To start seeing how to utilize models, let us generate random interaction data calling our generate_random_interaction() method.
@@ -113,11 +159,9 @@ We obtain the following results:
 
 <img width="444" alt="github_movielens100k_best_benchmark1" src="https://user-images.githubusercontent.com/85316690/178095761-13e4b317-c7e0-4dba-ab51-d65257488835.PNG">
 
-Consider that we have the bare minimum features for both users and items. With a judicious choice of initialization and loss function, the improvements from the default rating model to the ranking model are staggering (over 2 Orders of Magnitude improvement). With more preprocessing, feature engineering, and different choices of predictions and embeddings, this could likely be improved to a good degree.
+Consider that we have the bare minimum features for both users and items (identity, indicator features). With a judicious choice of initialization and loss function, our recall@10 on our testing set (of interactions with ratings of 4+) increased from 0.22% to 7.18%! This updated model, on average, has a 7.2% chance of recommending an item that a user would like, in the top 10 predictions. This demonstrates the utility of a ranking loss, like the **WMRB**, in a task such as item recommendations. 
 
-I check the consistency of these results by referring to a previous demonstration by James Kirk (creator of Tensorrec), run with [roughly] the same configurations as above, just look in this article: https://towardsdatascience.com/getting-started-with-recommender-systems-and-tensorrec-8f50a9943eef). 
-
-**Note:** Results will vary due to differences in computer hardware/environments, and simply due to the random nature of our model (namely in the initializations and, in case of the WMRB, the random sampling. Consider setting a random seed in your running environment if you do not want this to be the case).
+With more preprocessing, feature engineering, and different choices of predictions and embeddings, this could likely be improved to a good degree.
 
 ## Acknowledgments
 
