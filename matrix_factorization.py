@@ -58,6 +58,7 @@ class MatrixFactorization:
         self.n_items = n_items
         self.n_samples = n_samples
         self.random_ind = None
+        self.generate_sample = generate_sample
 
         # if n_items is given, but n_samples is not specified, take half of the total number of items
         if n_samples is None and n_items is not None:
@@ -265,12 +266,37 @@ class MatrixFactorization:
 
     def save_model(self):
         """
-        Method to save the model.
+        Method to save the model. When serving a model, we prioritize two things:
+
+        - Having the exact training setup (All the necessary graphs from a previous training run)
+        - Having the results of the training (in this case, it's our learned embeddings)
+
+        These two are sufficient to re-initialize models and train models again.
         
-        :return: a python dictionary: a configuration file containing all the necessary attributes about this model
+        :return: python dictionaries: a configuration file containing all the necessary attributes about this model, and a file with the trained embeddings, so that we can easily make predictions post-training
         """
 
-        dict_config = {'User Embedding': self.user_embedding, 'Item Embedding': self.item_embedding, 'Embedding Dimension': self.n_components}
+        # we will have a dictionary of graph configurations so that we can reproduce training
+        dict_config = {'Latent Dimension': self.n_components, 'User Embedding': self.user_repr_graph,
+                       'Item Embedding': self.item_repr_graph, 'Loss': self.loss_graph,
+                       'User Initialization': self.user_weight_graph, 'Item Initialization': self.item_weight_graph,
+                       'Number of Users': self.n_users, 'Number of Items': self.n_items,
+                       'Number of Samples': self.n_samples, 'Generate Sample': self.generate_sample}
 
-        return dict_config
+        # will have another dictionary, containing results of the training run, so that we may make predictions and do other things easily
+        dict_results = {'User Embedding': self.user_embedding, 'Item Embedding': self.item_embedding}
 
+        return dict_config, dict_results
+
+
+    @classmethod
+    def from_saved(cls, config):
+        """
+        The purpose of this is to initialize a model again using the dict_config from our save_model() method. Furthermore, we could just create a dictionary with all of the necessary components to initialize the model and input it into here as well.
+
+        :param config: python dictionary: holds the arguments to initialize the model as desired
+        :return: a newly initialized, untrained, MatrixFactorization() object
+        """
+
+        # unpack the configuration dictionary and put it into our class to initialize our new model
+        return cls(**config)
