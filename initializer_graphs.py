@@ -31,5 +31,22 @@ class NormalInitializer(Initializer):
         :param n_components:
         :return:
         """
-        weight = tf.Variable(tf.random.normal(shape=(n_features, n_components), dtype=tf.float32), trainable=True)
+        weight = tf.Variable(tf.math.l2_normalize(tf.random.normal(shape=(n_features, n_components), dtype=tf.float32)), trainable=True)
+        return weight
+
+
+class UniformInitializer(Initializer):
+    """
+    A subclass of Initializer, representing the object to initialize weights that are uniformly distributed
+    """
+
+    def initialize_weights(self, n_features, n_components):
+        """
+        NOTE: Look in docstring for Initializer().initialize_weights()
+
+        :param n_features:
+        :param n_components:
+        :return:
+        """
+        weight = tf.Variable(tf.math.l2_normalize(tf.random.uniform(shape=(n_features, n_components), dtype=tf.float32)), trainable=True)
         return weight

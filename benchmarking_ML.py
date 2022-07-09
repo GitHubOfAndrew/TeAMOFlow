@@ -15,6 +15,7 @@ import random
 # our libraries
 
 from matrix_factorization import MatrixFactorization
+from initializer_graphs import NormalInitializer, UniformInitializer
 from loss_graphs import WMRBLoss
 from input_utils import *
 
@@ -83,14 +84,14 @@ if run == True:
     A_train_4plus = tf.constant(train_np_4plus, dtype=tf.float32)
     A_test_4plus = tf.constant(test_np_4plus, dtype=tf.float32)
 
-    # fit wmrb with 4+ ratings
+    # fit wmrb with 4+ ratings to push those positive ratings to the top
     tf_train_4plus = convert_to_tf_sparse(train_np_4plus)
 
     # initialize model
     n_users, n_items = A_train.shape
-    n_sampled_items = n_items // 10
+    n_sampled_items = n_items // 5
     n_components = 5
-    epochs = 200
+    epochs = 100
 
     # WE WILL BE TRAINING BOTH MSE AND WMRB MODELS WITH THE SAME FEATURES AND HYPERPARAMETERS TO COMPARE PERFORMANCE
 
@@ -98,7 +99,8 @@ if run == True:
     model_ml_100k = MatrixFactorization(n_components)
 
     # WMRB model
-    model_ml_100k_wmrb = MatrixFactorization(n_components, loss_graph=WMRBLoss(), n_users=n_users, n_items=n_items,
+    model_ml_100k_wmrb = MatrixFactorization(n_components, user_weight_graph=UniformInitializer(), item_weight_graph=UniformInitializer(),
+                                             loss_graph=WMRBLoss(), n_users=n_users, n_items=n_items,
                                              n_samples=n_sampled_items, generate_sample=True)
 
     # initialize indicator features
@@ -110,7 +112,7 @@ if run == True:
     # fit model
     model_ml_100k.fit(epochs, user_features, item_features, tf_train, lr=1e-3)
 
-    model_ml_100k_wmrb.fit(epochs, user_features, item_features, tf_train_4plus, is_sample_based=True)
+    model_ml_100k_wmrb.fit(epochs, user_features, item_features, tf_train_4plus, is_sample_based=True, lr=0.1)
 
     # score model
     k = 10
@@ -141,10 +143,5 @@ if run == True:
     # precision_test_4plus = model_ml_100k.precision_at_k(A_test_4plus, k)
     print(f'Recall @ 10 on testing set (ratings >= 4) w/ MSE: {tf.reduce_mean(recall_test_4plus).numpy()}')
     print(f'Recall @ 10 on testing set (ratings >= 4) w/ WMRB: {tf.reduce_mean(recall_test_4plus_2).numpy()}')
-    # print('\n')
 
-    # recall_test_4plus_at_5 = model_ml_100k.recall_at_k(A_test_4plus, k=5)
-    # precision_test_4plus_at_5 = model_ml_100k.precision_at_k(A_test_4plus, k=5)
-    # print(f'Recall @ 5 on testing set (ratings >= 4): {tf.reduce_mean(recall_test_4plus_at_5).numpy()}')
-    # print(f'Precision @ 5 on testing set (ratings >= 4): {tf.reduce_mean(precision_test_4plus_at_5).numpy()}')
 

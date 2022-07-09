@@ -27,6 +27,16 @@ class MatrixFactorization:
 
     def __init__(self, n_components, user_repr_graph=LinearEmbedding(), item_repr_graph=LinearEmbedding(), loss_graph=MSELoss(), user_weight_graph=NormalInitializer(), item_weight_graph=NormalInitializer(), n_users=None, n_items=None, n_samples=None, generate_sample=False):
         """
+        By default, the model will be initialized as a regression-based model using the mean-squared error.
+
+        In general, our models will be of two types:\n
+        Regression-based RATING models (i.e. MSE Loss)\n
+        Sample-based RANKING models (i.e. WMRB Loss)
+
+        - Regression-based rating models will train to predict the observed interactions, and in the process, obtains user/item embeddings that will guess the correct unobserved interactions. In this way, the model will rate every item per user, and we will take the highest rated items as our recommendations. This configuration is recommended for smaller interaction datasets (~10^5 interactions) as the results are easily interpretable and training runtime is instant.
+
+        - Sample-based ranking models will train to prioritize the highest rated items over lower rated items (i.e. rank the items). This type of model prioritizes the order of items that the user would like more over others, training user/item embeddings to reflect this in the process. This model is recommended for larger datasets (~10^5 + interactions) as it learns to rank items with some idea of "priority" rather than hoping for an accurate rating.
+
         :param n_components: a python int: represents the number of latent features our item and user embeddings share
         :param user_repr_graph: an instance of Embeddings(): the graph that will embed the user features into a space of dimension n_components
         :param item_repr_graph: an instance of Embeddings(): the graph that will embed the item features into a space of dimension n_components
@@ -59,11 +69,16 @@ class MatrixFactorization:
 
     def fit(self, epochs, user_features, item_features, tf_interactions, is_sample_based=False, lr=1e-2):
         """
+        NOTE: There are two types of loss functions to consider with our model:
+        1) regression-based models
+        2) sample-based models
+
         :param epochs: python int: the number of iterations to perform optimization
         :param user_features: tensorflow tensor: the user features that are available to help perform the predictions
         :param item_features: tensorflow tensor: the item features that are available to help perform predictions
         :param tf_interactions: a sparse tensor: the interaction table
         :param lr: python float: the learning rate used for successive iterations in the optimization algorithm
+        :param is_sample_based: python boolean: a flag indicating whether the model is sample-based
         :return: nothing (mutates the initialized weights, and we initialized the embeddings)
         """
         # extract feature dimensions

@@ -8,12 +8,16 @@ from abc import *
 
 class LossGraph(ABC):
     """
-    An abstract base class representing the various loss functions that can be utilized in our matrix factorization model
+    An abstract base class representing the various loss functions that can be utilized in our matrix factorization model.
     """
 
     @abstractmethod
     def get_loss(self, tf_interactions, tf_sample_predictions, tf_prediction_serial, predictions, n_items, n_samples):
         """
+        NOTE: These loss graphs are intended to be fully vectorized, tf-tracing compatible, and should be GPU-compatible.
+
+        For custom implementations, please DO NOT use any non-tf functions to perform the computations as this will cause errors with tracing during the training loop. Any function that is in numpy can be replicated with a tensorflow method, please look at tensorflow documentation if this is a concern: https://www.tensorflow.org/api_docs/python/tf
+
         :param tf_interactions: a tensorflow sparse tensor: the sparse tensor containing the observed interactions, dense shape should be [n_users, n_items]
         :param tf_sample_predictions: a tensorflow tensor: the predictions of the model corresponding to the sampled items per user, it is of shape [n_users, n_samples]
         :param tf_prediction_serial: a tensorflow tensor: the predictions corresponding to the observed interactions, it is of shape [nonzero_interactions, 1]
