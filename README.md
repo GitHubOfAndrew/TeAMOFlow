@@ -2,7 +2,27 @@
 
 ## Purpose
 
-This library is created to quickly deploy matrix-based models using TensorFlow as the computational and programmatic framework. TeAMOFlow stands for "***Te***nsor ***A***nd ***M***atrix ***O***perations (using) Tensor***Flow***". In particular, TeAMOFlow, at its core, is a library meant to facilitate matrix factorization-based recommender systems. 
+This library is created to quickly deploy matrix-based models using TensorFlow as the computational and programmatic framework. TeAMOFlow stands for "***Te***nsor ***A***nd ***M***atrix ***O***perations (with) Tensor***Flow***". In particular, TeAMOFlow, at its core, is a library meant to facilitate matrix factorization-based recommender systems. 
+
+We have 3 objectives in developing this library:
+
+1) Developing an extremely-user friendly workflow for quick model prototyping.
+
+2) Giving a wide variety of configurations to play around with, while also allowing contributors to easily plug in their own ideas.
+
+3) Updating valuable work done by previous libraries.
+
+We achieve these as follows:
+
+1) This is completely adapted to the current python 3.6+ ecosystem. Furthermore, this takes full advantage of tensorflow 2.X's eager execution and autograph system. Unlike tensorflow 1.X, which needed a lot of boilerplate code to build computational graphs and execute them, our library is built on top of the most user-friendly and intuitive version of two industry giants: Python 3.X, and TensorFlow 2.X.
+
+2) We architected our code on a purely object-oriented manner, allowing for modularity in every step of the machine learning process (initialization, embedding, training, prediction, evaluation). This makes it easy to both: plug in and play, and to write custom implementations of various parts of the model.
+
+3) We fully acknowledge the importance of those who came before us. They walked so we could fly (or at least walk faster). Much of TeAMOFlow was developed out of necessity to keep James Kirk's excellent library, TensorRec (https://github.com/jfkirk/tensorrec), alive. Kirk and TensorRec were my first introduction to recommender systems and the matrix factorization space, and while it has been long-inactive (I suspect this is largely due to the code being written in TensorFlow 1.X), there is no reason that this work has to become lost to time. I actively want people to know of TensorRec's existence and its ingenuity, and I hope to uphold its memory and continue active development upon those ideas in this library.
+
+## Goals
+
+While the primary object of focus is the matrix factorization component, I named it "TeAMOFlow" for a reason: I hope to expand this library to encompass all kinds of matrix/tensor-based machine learning models. I intend for this library to have implementations from machine learning literature that are not commonly found in other similar libraries. This investigative spirit and willingness to experiment is something I encourage to myself, and to everyone.
 
 ## Demonstration of Matrix Factorization Model
 
