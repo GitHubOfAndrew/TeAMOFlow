@@ -67,37 +67,40 @@ We ensure the validity of the matrix factorization model by evaluating its perfo
 
 The MovieLens 100k dataset is data containing movies, users, and features about the movies, users and their interactions (user ratings of movies). As the name suggests, the dataset has about 100k nonzero ratings of movies by users, which we deem to be interactions.
 
-The code to test our model out on this dataset is given in the file 'benchmarking_ML.py'. We will not implement it on this page, but we will show the results below for the following configuration:
+The code to test our model out on this dataset is given in the file 'benchmarking_ML.py'. We will not implement it on this page, but we will show the results. We trained the two (main) types of models available in TeAMOFlow: a regression-based rating model, and a ranking model. The former uses a vectorized Mean-Squared Error Loss on observed interactions to predict ratings of unobserved user-item interactions. The latter uses a loss function called the **Weighted Margin Rank Batch Loss** (WMRB) which ranks suitable items higher than less suitable items. Using the following configurations:
 
 ```
-# the dimension of the range of the embedding
+# NOTE: The following configurations are in benchmarking_ML.py
+# MSE Rating Model
+
+epochs = 100
+learning_rate = 1e-3
+Weight_Initialization = NormalInitializer()
+Loss = MSELoss()
 n_components = 5
 
-# initialize model with default embedding, loss, initializer graphs
-model = MatrixFactorization(n_components)
+# WMRB Ranking Model
 
-# number of epochs to optimize the model
 epochs = 100
-
-# learning rate for the optimizer (Adam)
-learning_rate = 1e-3
-
-# user and item features; both set as identity matrices for baseline benchmarking purposes
-user_features = tf.eye(n_users)
-
-item_features = tf.eye(n_items)
+learning_rate = 0.1
+Weight_Initialization = UniformInitializer()
+Loss = WMRBLoss()
+n_components = 5
+n_samples = 1944
 ```
 
-<img width="407" alt="TeAMOFlow MF benchmark N_comp-5 lr-1e-3 pt 2 img 2" src="https://user-images.githubusercontent.com/85316690/177405951-67104365-2d27-4464-9293-3dde05baf9ce.PNG">
+We obtain the following results:
 
-Although far from optimal (on all ratings >= 4, there's a 0.14% chance that a user gets an item that they like in the top 10 predictions [recall @ 10]), this does give us a baseline for the performance of this model. Given the scale of the data however, this 0.14% is more significant than it seems. The configuration of this model is the most basic possible configuration (MSE loss, un-biased linear embeddings, normal initialization).
+<img width="444" alt="github_movielens100k_best_benchmark1" src="https://user-images.githubusercontent.com/85316690/178095761-13e4b317-c7e0-4dba-ab51-d65257488835.PNG">
 
-I check the consistency of these results by referring to a previous benchmark demonstrated by James Kirk (creator of Tensorrec [look in *Acknowledgements*]), run with my exact configurations above, in this article: https://towardsdatascience.com/getting-started-with-recommender-systems-and-tensorrec-8f50a9943eef). 
+Consider that we have the bare minimum features for both users and items. With a judicious choice of initialization and loss function, the improvements from the default rating model to the ranking model are staggering (over 2 Orders of Magnitude improvement). With more preprocessing, feature engineering, and different choices of predictions and embeddings, this could likely be improved to a good degree.
 
-**Note:** Results may vary due to differences in hardware and environment configurations.
+I check the consistency of these results by referring to a previous demonstration by James Kirk (creator of Tensorrec), run with [roughly] the same configurations as above, just look in this article: https://towardsdatascience.com/getting-started-with-recommender-systems-and-tensorrec-8f50a9943eef). 
+
+**Note:** Results will vary due to differences in computer hardware/environments, and simply due to the random nature of our model (namely in the initializations and, in case of the WMRB, the random sampling. Consider setting a random seed in your running environment if you do not want this to be the case).
 
 ## Acknowledgments
 
-We would like to acknowledge the efforts of James Kirk and his fantastic project **Tensorrec** (link: https://github.com/jfkirk/tensorrec), from which this project took inspiration from. In fact, this project came out as an effort to adopt Tensorrec for the TensorFlow 2.x environment (as that library was written on TensorFlow 1.x). By no means are the ideas behind this work original, they are from many fantastic tutorials and academic research done in the field. Please contact me if I have violated any policies regarding fair use or plagiarism.
+We would like to acknowledge the efforts of James Kirk and his fantastic project **TensorRec** (link: https://github.com/jfkirk/tensorrec), from which this project took inspiration from. In fact, this project came out as an effort to adopt Tensorrec for the TensorFlow 2.x environment (as that library is written on TensorFlow 1.x and is no longer supported). By no means are the ideas behind this work 100% original, they are from many fantastic tutorials and academic research done in the field. I have added my own optimizations and workflow in this, however. Please contact me if I have violated any policies regarding fair use or plagiarism.
 
-***Note:*** This project is extremely early in its development cycle and not nearly close to completed to where I would like. For more information, or if you would like to collaborate, please contact me at andrewjych@gmail.com.
+***Note:*** This project is extremely early in its development cycle and not nearly close to completed to where I would like. Please open a pull request or an issue if there are any changes/improvements that need to be suggested.
