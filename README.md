@@ -157,9 +157,9 @@ n_samples = 1944
 
 We obtain the following results:
 
-<img width="444" alt="github_movielens100k_best_benchmark1" src="https://user-images.githubusercontent.com/85316690/178095761-13e4b317-c7e0-4dba-ab51-d65257488835.PNG">
+<img width="438" alt="upload_best_setup1" src="https://user-images.githubusercontent.com/85316690/178170254-85cf68f7-a025-483b-ab8b-5ecd75f36c23.PNG">
 
-Consider that we have the bare minimum features for both users and items (identity, indicator features). With a judicious choice of initialization and loss function, our recall@10 on our testing set (of interactions with ratings of 4+) increased from 0.22% to 7.18%! This updated model, on average, has a 7.2% chance of recommending an item that a user would like, in the top 10 predictions. This demonstrates the utility of a ranking loss, like the **WMRB**, in a task such as item recommendations. 
+Consider that we have the bare minimum features for both users and items (identity, indicator features). With a judicious choice of initialization and loss function, our recall @ 10 on our testing set (of interactions with ratings of 4+) increased from 0.23% to 7.53%! This means that, on average, has a 7.5% chance of recommending an item that a user would like, in its top 10 predictions. Furthermore, this model attains an 18% recall @ 30, and a 24% recall @ 50. This demonstrates the utility of a ranking loss, like the **WMRB**, in a task such as item recommendations. 
 
 With more preprocessing, feature engineering, and different choices of predictions and embeddings, this could likely be improved to a good degree.
 
