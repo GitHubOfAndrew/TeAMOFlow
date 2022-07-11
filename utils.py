@@ -22,8 +22,12 @@ def random_sampler(n_items, n_users, n_samples, replace=False):
     return tf.constant(np.array(items_per_user), dtype=tf.int64)
 
 
-def generate_random_interaction(n_users, n_items, max_entry=5.0, density=0.50):
-    random_arr = np.round(max_entry * sparse.random(n_users, n_items, density=density).toarray())
+def generate_random_interaction(n_users, n_items, min_val=0.0, max_val=5.0, density=0.50):
+    p = sparse.random(n_users, n_items, density=density)
+
+    p = (max_val - min_val) * p + min_val * p.ceil()
+
+    random_arr = np.round(p.toarray())
 
     scipy_random_arr = sparse.csr_matrix(random_arr)
 
