@@ -17,6 +17,7 @@ import random
 from matrix_factorization import MatrixFactorization
 from initializer_graphs import NormalInitializer, UniformInitializer
 from loss_graphs import WMRBLoss
+from embedding_graphs import *
 from input_utils import *
 
 
@@ -103,6 +104,13 @@ if run == True:
                                              loss_graph=WMRBLoss(), n_users=n_users, n_items=n_items,
                                              n_samples=n_sampled_items, generate_sample=True)
 
+    # WMRB model w/ biased linear embedding
+    model_ml_100k_wmrb_user_biased = MatrixFactorization(n_components, user_weight_graph=UniformInitializer(),
+                                                    item_weight_graph=UniformInitializer(), loss_graph=WMRBLoss(),
+                                                    user_repr_graph=BiasedLinearEmbedding(), item_repr_graph=BiasedLinearEmbedding(),
+                                                    n_users=n_users, n_items=n_items, n_samples=n_sampled_items,
+                                                    generate_sample=True)
+
     # initialize indicator features
 
     user_features = tf.eye(n_users)
@@ -112,48 +120,62 @@ if run == True:
     # fit model
     model_ml_100k.fit(epochs, user_features, item_features, tf_train, lr=1e-3)
 
-    model_ml_100k_wmrb.fit(epochs, user_features, item_features, tf_train_4plus, is_sample_based=True, lr=0.1)
+    model_ml_100k_wmrb.fit(epochs, user_features, item_features, tf_train_4plus, lr=0.1)
+
+    model_ml_100k_wmrb_user_biased.fit(epochs, user_features, item_features, tf_train_4plus, lr=0.1)
 
     # score model
     k = 10
     recall_train = model_ml_100k.recall_at_k(A_train, k)
     recall_train_2 = model_ml_100k_wmrb.recall_at_k(A_train, k)
+    recall_train_3 = model_ml_100k_wmrb_user_biased.recall_at_k(A_train)
     # precision_train = model_ml_100k.precision_at_k(A_train, k)
 
     print(f'Recall @ 10 on training set w/ MSE: {tf.reduce_mean(recall_train).numpy()}')
     print(f'Recall @ 10 on training set w/ WMRB: {tf.reduce_mean(recall_train_2).numpy()}')
+    print(f'Recall @ 10 on training set w/ WMRB, biased: {tf.reduce_mean(recall_train_3).numpy()}')
     print('\n')
 
     recall_test = model_ml_100k.recall_at_k(A_test, k)
     recall_test_2 = model_ml_100k_wmrb.recall_at_k(A_test, k)
+    recall_test_3 = model_ml_100k_wmrb_user_biased.recall_at_k(A_test)
     # precision_test = model_ml_100k.precision_at_k(A_test, k)
     print(f'Recall @ 10 on testing set w/ MSE: {tf.reduce_mean(recall_test).numpy()}')
     print(f'Recall @ 10 on testing set w/ WMRB: {tf.reduce_mean(recall_test_2).numpy()}')
+    print(f'Recall @ 10 on testing set w/ WMRB, biased: {tf.reduce_mean(recall_test_3).numpy()}')
     print('\n')
 
     recall_train_4plus = model_ml_100k.recall_at_k(A_train_4plus, k)
     recall_train_4plus_2 = model_ml_100k_wmrb.recall_at_k(A_train_4plus, k)
+    recall_train_4plus_3 = model_ml_100k_wmrb_user_biased.recall_at_k(A_train_4plus, k)
     # precision_train_4plus = model_ml_100k.precision_at_k(A_train_4plus, k)
     print(f'Recall @ 10 on training set (ratings >= 4) w/ MSE: {tf.reduce_mean(recall_train_4plus).numpy()}')
     print(f'Recall @ 10 on training set (ratings >= 4) w/ WMRB: {tf.reduce_mean(recall_train_4plus_2).numpy()}')
+    print(f'Recall @ 10 on training set (ratings >= 4) w/ WMRB, biased: {tf.reduce_mean(recall_train_4plus_3).numpy()}')
     print('\n')
 
     recall_test_4plus = model_ml_100k.recall_at_k(A_test_4plus, k)
     recall_test_4plus_2 = model_ml_100k_wmrb.recall_at_k(A_test_4plus, k)
+    recall_test_4plus_3 = model_ml_100k_wmrb_user_biased.recall_at_k(A_test_4plus, k)
     # precision_test_4plus = model_ml_100k.precision_at_k(A_test_4plus, k)
     print(f'Recall @ 10 on testing set (ratings >= 4) w/ MSE: {tf.reduce_mean(recall_test_4plus).numpy()}')
     print(f'Recall @ 10 on testing set (ratings >= 4) w/ WMRB: {tf.reduce_mean(recall_test_4plus_2).numpy()}')
+    print(f'Recall @ 10 on testing set (ratings >= 4) w/ WMRB, biased: {tf.reduce_mean(recall_test_4plus_3).numpy()}')
     print('\n')
 
     recall_test_4plus_30 = model_ml_100k.recall_at_k(A_test_4plus, k=30)
     recall_test_4plus_2_30 = model_ml_100k_wmrb.recall_at_k(A_test_4plus, k=30)
+    recall_test_4plus_3_30 = model_ml_100k_wmrb_user_biased.recall_at_k(A_test_4plus, k=30)
     # precision_test_4plus = model_ml_100k.precision_at_k(A_test_4plus, k)
     print(f'Recall @ 30 on testing set (ratings >= 4) w/ MSE: {tf.reduce_mean(recall_test_4plus_30).numpy()}')
     print(f'Recall @ 30 on testing set (ratings >= 4) w/ WMRB: {tf.reduce_mean(recall_test_4plus_2_30).numpy()}')
+    print(f'Recall @ 30 on testing set (ratings >= 4) w/ WMRB, biased: {tf.reduce_mean(recall_test_4plus_3_30).numpy()}')
     print('\n')
 
     recall_test_4plus_50 = model_ml_100k.recall_at_k(A_test_4plus, k=50)
     recall_test_4plus_2_50 = model_ml_100k_wmrb.recall_at_k(A_test_4plus, k=50)
+    recall_test_4plus_3_50 = model_ml_100k_wmrb_user_biased.recall_at_k(A_test_4plus, k=50)
     # precision_test_4plus = model_ml_100k.precision_at_k(A_test_4plus, k)
     print(f'Recall @ 50 on testing set (ratings >= 4) w/ MSE: {tf.reduce_mean(recall_test_4plus_50).numpy()}')
     print(f'Recall @ 50 on testing set (ratings >= 4) w/ WMRB: {tf.reduce_mean(recall_test_4plus_2_50).numpy()}')
+    print(f'Recall @ 50 on testing set (ratings >= 4) w/ WMRB, biased: {tf.reduce_mean(recall_test_4plus_3_50).numpy()}')

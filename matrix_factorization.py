@@ -14,7 +14,7 @@ import timeit as t
 # our libraries: other objects for this model
 from initializer_graphs import NormalInitializer
 from embedding_graphs import LinearEmbedding
-from loss_graphs import MSELoss
+from loss_graphs import *
 
 # our libraries: utility/helper functions
 from utils import gather_matrix_indices, random_sampler
@@ -68,7 +68,7 @@ class MatrixFactorization:
         if generate_sample == True:
             self.random_ind = random_sampler(n_items, n_users, n_samples)
 
-    def fit(self, epochs, user_features, item_features, tf_interactions, is_sample_based=False, lr=1e-2):
+    def fit(self, epochs, user_features, item_features, tf_interactions, lr=1e-2):
         """
         NOTE: There are two types of loss functions to consider with our model:
         1) regression-based models
@@ -79,7 +79,6 @@ class MatrixFactorization:
         :param item_features: tensorflow tensor: the item features that are available to help perform predictions
         :param tf_interactions: a sparse tensor: the interaction table
         :param lr: python float: the learning rate used for successive iterations in the optimization algorithm
-        :param is_sample_based: python boolean: a flag indicating whether the model is sample-based
         :return: nothing (mutates the initialized weights, and we initialized the embeddings)
         """
         # extract feature dimensions
@@ -103,12 +102,12 @@ class MatrixFactorization:
                 # generate predictions to trace the embeddings in autograph
                 predictions = tf.matmul(user_embedding, tf.transpose(item_embedding))
 
-                # check if model is sample-based
-                if is_sample_based == True:
+                # check which loss the model corresponds to
+                if isinstance(self.loss_graph, WMRBLoss):
                     tf_sample_predictions = gather_matrix_indices(predictions, self.random_ind)
                     tf_prediction_serial = tf.gather_nd(params=predictions, indices=tf_interactions.indices)
                     predictions = None
-                else:
+                if isinstance(self.loss_graph, MSELoss):
                     tf_sample_predictions = None
                     tf_prediction_serial = None
 
