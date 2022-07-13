@@ -23,6 +23,17 @@ def random_sampler(n_items, n_users, n_samples, replace=False):
 
 
 def generate_random_interaction(n_users, n_items, min_val=0.0, max_val=5.0, density=0.50):
+    """
+    Generates a random matrix of shape (n_users, n_items) in the range of [min_val, max_val] with density being the proportion of nonzero entries in the tensor.
+
+    :param n_users: python int: number of users (queries)
+    :param n_items: python int: number of items (keys)
+    :param min_val: python int: minimum value of entries
+    :param max_val: python int: maximum value of entries
+    :param density: python float: the proportion of nonzero entries in the entire matrix
+    :return: tf.sparse.SparseTensor, tf.tensor: representing the interaction table tensor, the sparse tensor is meant to be used for training
+    """
+
     p = sparse.random(n_users, n_items, density=density)
 
     p = (max_val - min_val) * p + min_val * p.ceil()
