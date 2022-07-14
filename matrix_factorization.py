@@ -13,7 +13,7 @@ import timeit as t
 
 # our libraries: other objects for this model
 from initializer_graphs import NormalInitializer
-from embedding_graphs import LinearEmbedding
+from embedding_graphs import *
 from loss_graphs import *
 
 # our libraries: utility/helper functions
@@ -68,6 +68,12 @@ class MatrixFactorization:
         if generate_sample == True:
             self.random_ind = random_sampler(n_items, n_users, n_samples)
 
+        # check if embedding graphs are instances of ReLU Embedding as we need to specify the relu dimensions
+        if isinstance(self.user_repr_graph, ReLUEmbedding):
+            self.user_aux_dim = 5 * self.n_components
+        if isinstance(self.item_repr_graph, ReLUEmbedding):
+            self.item_aux_dim = 5 * self.n_components
+
     def fit(self, epochs, user_features, item_features, tf_interactions, lr=1e-2):
         """
         NOTE: There are two types of loss functions to consider with our model:
@@ -86,8 +92,16 @@ class MatrixFactorization:
         n_items, n_item_features = item_features.shape
 
         # initialize weights
-        U = self.user_weight_graph.initialize_weights(n_user_features, self.n_components)
-        V = self.item_weight_graph.initialize_weights(n_item_features, self.n_components)
+        # check what instance the embedding graph is
+        if not isinstance(self.user_repr_graph, ReLUEmbedding):
+            U = self.user_weight_graph.initialize_weights(n_user_features, self.n_components)
+        else:
+            U = self.user_weight_graph.initialize_weights(self.user_aux_dim, self.n_components)
+
+        if not isinstance(self.item_repr_graph, ReLUEmbedding):
+            V = self.item_weight_graph.initialize_weights(n_item_features, self.n_components)
+        else:
+            V = self.item_weight_graph.initialize_weights(self.item_aux_dim, self.n_components)
 
         # run training loop
         cumulative_time = 0
