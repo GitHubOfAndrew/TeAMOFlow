@@ -8,7 +8,7 @@ version = "0.0.0"
 authors = [
   { name="andrew_jy", email="andrewjych@gmail.com" },
 ]
-description = "A TensorFlow 2.X-based matrix factorization framework, particularly for the purpose of query-value matching."
+description = "A TensorFlow 2.X-based matrix factorization framework, particularly for the purpose of query (user)-value (item) matching."
 readme = "README.md"
 license = { file="" }
 requires-python = ">=3.7"
