@@ -1,10 +1,10 @@
 # SCRIPT TO TEST MATRIX FACTORIZATION MODEL in matrix_factorization.py
 
 import tensorflow as tf
-from matrix_factorization import MatrixFactorization
-from loss_graphs import WMRBLoss
+from .matrix_factorization import MatrixFactorization
+from .loss_graphs import WMRBLoss
 
-from utils import generate_random_interaction
+from .utils import generate_random_interaction
 
 
 # call the instance

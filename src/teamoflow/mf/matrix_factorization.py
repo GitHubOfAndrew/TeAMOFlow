@@ -12,12 +12,12 @@ import numpy as np
 import timeit as t
 
 # our libraries: other objects for this model
-from initializer_graphs import NormalInitializer
-from embedding_graphs import *
-from loss_graphs import *
+from .initializer_graphs import NormalInitializer
+from .embedding_graphs import *
+from .loss_graphs import *
 
 # our libraries: utility/helper functions
-from utils import gather_matrix_indices, random_sampler
+from .utils import gather_matrix_indices, random_sampler
 
 
 class MatrixFactorization:
