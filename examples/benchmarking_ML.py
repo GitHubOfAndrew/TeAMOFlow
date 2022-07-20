@@ -14,11 +14,11 @@ import random
 
 # our libraries
 
-from .matrix_factorization import MatrixFactorization
-from .initializer_graphs import NormalInitializer, UniformInitializer
-from .loss_graphs import WMRBLoss
-from .embedding_graphs import *
-from .input_utils import *
+from src.teamoflow.mf.matrix_factorization import MatrixFactorization
+from src.teamoflow.mf.initializer_graphs import NormalInitializer, UniformInitializer
+from src.teamoflow.mf.loss_graphs import WMRBLoss
+from src.teamoflow.mf.embedding_graphs import *
+from src.teamoflow.mf.input_utils import *
 
 
 # This method converts a list of (user, item, rating, time) to a sparse matrix

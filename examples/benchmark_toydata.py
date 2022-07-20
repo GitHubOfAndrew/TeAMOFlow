@@ -1,10 +1,11 @@
 # SCRIPT TO TEST MATRIX FACTORIZATION MODEL in matrix_factorization.py
 
 import tensorflow as tf
-from .matrix_factorization import MatrixFactorization
-from .loss_graphs import WMRBLoss
 
-from .utils import generate_random_interaction
+from src.teamoflow.mf.matrix_factorization import MatrixFactorization
+from src.teamoflow.mf.loss_graphs import WMRBLoss
+
+from src.teamoflow.mf.utils import generate_random_interaction
 
 
 # call the instance
@@ -59,7 +60,7 @@ if __name__ == "__main__":
 
         epochs = 150
 
-        model2.fit(epochs, user_features, item_features, tf_interaction, is_sample_based=True)
+        model2.fit(epochs, user_features, item_features, tf_interaction)
 
         recall_at_10_2 = model2.recall_at_k(A, preserve_rows=True)
         precision_at_10_2 = model2.precision_at_k(A, preserve_rows=True)
