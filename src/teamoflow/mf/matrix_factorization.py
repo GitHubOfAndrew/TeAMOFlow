@@ -66,7 +66,7 @@ class MatrixFactorization:
 
         # do random sampling without replacement if generate_sample flag is true
         if generate_sample == True:
-            self.random_ind = random_sampler(n_items, n_users, n_samples)
+            self.random_ind = random_sampler(n_items, n_users, self.n_samples)
 
         # check if embedding graphs are instances of ReLU Embedding as we need to specify the relu dimensions
         if isinstance(self.user_repr_graph, ReLUEmbedding):
