@@ -28,6 +28,42 @@ While the primary object of focus is the matrix factorization component, we plan
 
 TeAMOFlow currently has 1 library at minimum operational capacity: the Matrix Factorization library. Our next goal is to create a DNN specifically for query-key matching. This will circumvent having to load a keras instance from scratch, and it allows the user to prioritize feature engineering and preprocessing over drafting and prototyping a model.
 
+## Concept Behind Matrix Factorization
+
+We can view matrix factorization as a mathematical problem in the following manner:
+
+Suppose we have a *sparse* matrix $A$. $A$ is known as the interaction table (matrix/tensor). The row headers of this interaction table represent **users** (query), the column headers represent **items** (value). This table encodes a *user* **interacting** with an *item*. For example, in the following table:
+
+$$A = \begin{pmatrix} 
+1 & 0 & 0\\[3pt]
+0 & 0 & 1\\[3pt]
+1 & 0 & 0
+\end{pmatrix}$$
+
+This interaction table encodes a simple *passive* (implicit) interaction between user 1/item 1, user 2/item 3, and user 3/item 1 (this interaction could be that these users clicked on their respective items, this is typically what an "implicit" interaction entails).
+
+The mathematical process behind matrix factorization is simple:
+
+Let $U$ and $V$ be matrices with common rank $r$, such that $U \in M_{m\times r}(\mathbb{R})$ and $V \in M_{n\times r}(\mathbb{R})$.
+
+Then, for *user embedding* and *item embedding*, $U$, $V$, respectively, and an appropriate loss function $\mathcal{L}$ (that computes the deviation between $A$ and $U\cdot V^{T}$), we want to find $U$, $V$ such that:
+
+$$\mathcal{L}(A, U, V) < \varepsilon \quad \forall i,j : A_{ij} \neq 0$$
+
+TeAMOFlow computes the embeddings in the following way:
+
+Let $f$, $g$ be user, item embeddings, respectively (an *embedding* is, for our purposes, **a continuous function that maps vectors into lower-dimensional vector spaces**). Then let $W_{u}$, $W_{v}$ be **user features**, **item features**, respectively (*features* are, for our purposes, data about the user/item beyond the scope of the interactions). We use our embedding functions $f$, $g$ to compute the user and item embeddings as follows:
+
+$$U = f(W_{u}) \quad V = g(W_{v})$$
+
+Therefore, the full workflow of matrix factorization, in TeAMOFlow, is summarizable as follows:
+
+- Select user features and item features, $W_{u}$, $W_{v}$.
+- Initialize trainable weights and compute user and item embeddings ($U$, $V$), choosing our embedding functions $f$, $g$ appropriately. The result will be $U = f(W_{u})$, $V = g(W_{u})$.
+- Compute our loss function $\mathcal{L}(A, U, V)$.
+- Take the gradient and perform gradient descent/optimization on initialized weights.
+- Repeat steps 3, 4.
+
 ## Getting Started with TeAMOFlow Matrix Factorization Library
 
 To start seeing how to utilize models in our Matrix Factorization library, let us generate random interaction data calling our generate_random_interaction() method.
