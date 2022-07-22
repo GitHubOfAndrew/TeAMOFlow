@@ -35,8 +35,8 @@ We can view matrix factorization as a mathematical problem in the following mann
 Suppose we have a *sparse* matrix $A$. $A$ is known as the interaction table (matrix/tensor). The row headers of this interaction table represent **users** (query), the column headers represent **items** (value). This table encodes a *user* **interacting** with an *item*. For example, in the following table:
 
 $$A = \begin{pmatrix} 
-1 & 0 & 0\\[3pt]
-0 & 0 & 1\\[3pt]
+1 & 0 & 0\
+0 & 0 & 1\
 1 & 0 & 0
 \end{pmatrix}$$
 
