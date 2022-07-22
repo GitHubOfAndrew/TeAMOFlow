@@ -34,11 +34,7 @@ We can view matrix factorization as a mathematical problem in the following mann
 
 Suppose we have a *sparse* matrix $A$. $A$ is known as the interaction table (matrix/tensor). The row headers of this interaction table represent **users** (query), the column headers represent **items** (value). This table encodes a *user* **interacting** with an *item*. For example, in the following table:
 
-$$A = \begin{pmatrix} 
-1 & 0 & 0\
-0 & 0 & 1\
-1 & 0 & 0
-\end{pmatrix}$$
+<img width="150" alt="github_readme_mf_example" src="https://user-images.githubusercontent.com/85316690/180573179-eaa9c5cd-4ef8-46a8-a3dd-dd5967323b2d.PNG">
 
 This interaction table encodes a simple *passive* (implicit) interaction between user 1/item 1, user 2/item 3, and user 3/item 1 (this interaction could be that these users clicked on their respective items, this is typically what an "implicit" interaction entails).
 
