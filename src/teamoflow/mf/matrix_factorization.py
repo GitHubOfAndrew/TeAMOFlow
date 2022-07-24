@@ -43,6 +43,10 @@ class MatrixFactorization:
         :param loss_graph: an instance of LossGraph(): the graphs that will be utilized to compute the loss
         :param user_weight_graph: an instance of Initializer(): the graphs that will initialize the weights to be used in user embedding
         :param item_weight_graph: an instance of Initializer(): the graphs that will initialize the weights to be used in item embedding
+        :param n_users: python int: the number of users, NOTE: this is used to generate samples for the WMRB loss
+        :param n_items: python int: the number of items, NOTE: this is used to generate samples for the WMRB loss
+        :param n_samples: python in: the number of samples, NOTE: this is used to generate samples for the WMRB loss; n_samples <= n_items (this is a must or it will throw an error)
+        :param generate_sample: python boolean, NOTE: this will indicate whether to generate a random sample or not
         """
 
         # initialize graphs for training and evaluation
@@ -124,6 +128,10 @@ class MatrixFactorization:
                 if isinstance(self.loss_graph, MSELoss):
                     tf_sample_predictions = None
                     tf_prediction_serial = None
+                if isinstance(self.loss_graph, KLDivergenceLoss):
+                    tf_prediction_serial = tf.gather_nd(params=predictions, indices=tf_interactions.indices)
+                    tf_sample_predictions = None
+                    predictions = None
 
                 # compute loss (if sample_based == True, use WMRB loss)
                 loss_fn = self.loss_graph.get_loss(tf_interactions=tf_interactions, tf_sample_predictions=tf_sample_predictions,

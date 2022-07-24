@@ -1,6 +1,7 @@
 # THIS CONTAINS THE NECESSARY ABSTRACTIONS FOR LOSS FUNCTIONS IN TENSORFLOW
 
 import tensorflow as tf
+import tensorflow_probability as tp
 import numpy as np
 # from utils import random_sampler
 from abc import *
@@ -87,3 +88,38 @@ class WMRBLoss(LossGraph):
         sampled_margin_rank = (n_items / n_samples) * tf.reduce_sum(summation_term, axis=1)
 
         return tf.math.log(1.0 + sampled_margin_rank)
+
+
+class KLDivergenceLoss(LossGraph):
+    """
+    The Kullback-Leibler Divergence Loss. This loss handles interaction tables consisting of both positive and negative interactions.
+
+    It models the distribution of positive and negative interactions as normal distributions, and computes the complement of the CDF of their intersection.
+
+    For more resources on this implementation, please refer to: https://www.tensorflow.org/api_docs/python/tf/keras/losses/KLDivergence
+    """
+
+    def get_loss(self, tf_prediction_serial, tf_interactions, tf_sample_predictions=None, predictions=None, n_items=None, n_samples=None):
+        """
+        :param tf_prediction_serial:
+        :param tf_interactions:
+        :param tf_sample_predictions:
+        :param predictions:
+        :param n_items:
+        :param n_samples:
+        :return:
+        """
+
+        tf_pos_mask, tf_neg_mask = tf.greater(tf_interactions.values, 0.0), tf.less_equal(tf_interactions.values, 0.0)
+
+        tf_pos_pred, tf_neg_pred = tf.boolean_mask(tf_prediction_serial, tf_pos_mask), tf.boolean_mask(tf_prediction_serial,
+                                                                                                       tf_neg_mask)
+
+        tf_pos_mean, tf_pos_var = tf.nn.moments(tf_pos_pred, axes=[0])
+
+        tf_neg_mean, tf_neg_var = tf.nn.moments(tf_neg_pred, axes=[0])
+
+        overlap_dist = tp.distributions.Normal(loc=(tf_neg_mean - tf_pos_mean), scale=tf.sqrt(tf_pos_var + tf_neg_var))
+
+        return 1.0 - overlap_dist.cdf(0.0)
+

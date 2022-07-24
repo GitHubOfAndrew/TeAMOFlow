@@ -3,7 +3,7 @@
 import tensorflow as tf
 
 from src.teamoflow.mf.matrix_factorization import MatrixFactorization
-from src.teamoflow.mf.loss_graphs import WMRBLoss
+from src.teamoflow.mf.loss_graphs import WMRBLoss, KLDivergenceLoss
 
 from src.teamoflow.mf.utils import generate_random_interaction
 
@@ -11,11 +11,11 @@ from src.teamoflow.mf.utils import generate_random_interaction
 # call the instance
 
 if __name__ == "__main__":
-    loss = 'wmrb'
+    loss = 'KL'
 
     # give dimensions and load toy data
-    n_users, n_items, n_components = 100, 100, 3
-    tf_interaction, A = generate_random_interaction(n_users, n_items, density=0.01)
+    n_users, n_items, n_components = 500, 1000, 5
+    tf_interaction, A = generate_random_interaction(n_users, n_items, min_val=-5.0, density=0.01)
 
     if loss == 'mse':
         # generate user, item features: use indicator features
@@ -58,9 +58,9 @@ if __name__ == "__main__":
         model2 = MatrixFactorization(n_components=n_components, n_users=n_users, n_items=n_items,
                                      n_samples=n_sampled_items, generate_sample=True, loss_graph=WMRBLoss())
 
-        epochs = 150
+        epochs = 100
 
-        model2.fit(epochs, user_features, item_features, tf_interaction)
+        model2.fit(epochs, user_features, item_features, tf_interaction, lr=0.1)
 
         recall_at_10_2 = model2.recall_at_k(A, preserve_rows=True)
         precision_at_10_2 = model2.precision_at_k(A, preserve_rows=True)
@@ -69,4 +69,37 @@ if __name__ == "__main__":
         print(f'Recall @ 10 w/ WMRB: {tf.reduce_mean(recall_at_10_2).numpy()}')
         print(f'Precision @ 10 w/ WMRB: {tf.reduce_mean(precision_at_10_2).numpy()}')
         print(f'f1 @ 10 w/ WMRB: {f1_at_10_2}')
+
+
+    if loss == 'KL':
+        # WE USE KL DIVERGENCE FOR INTERACTIONS WITH BOTH NEGATIVE AND POSITIVE INTERACTIONS
+
+        # generate user, item features: use indicator features
+        user_features = tf.eye(n_users)
+        item_features = tf.eye(n_items)
+
+        # initialize model
+
+        model3 = MatrixFactorization(n_components, loss_graph=KLDivergenceLoss())
+
+        # check attributes
+        print(model3.user_repr_graph)
+        print(model3.item_repr_graph)
+        print(model3.loss_graph)
+
+        # run training loop
+        epochs = 30
+        model3.fit(epochs, user_features, item_features, tf_interaction, lr=0.0001)
+
+        # run prediction
+        _, tf_predictions = model3.predict(A)
+
+        # get scores
+
+        recall_at_10_3 = model3.recall_at_k(A)
+        precision_at_10_3 = model3.precision_at_k(A)
+        f1_at_10_3 = model3.f1_at_k(A)
+        print(f'Recall at 10: {tf.reduce_mean(recall_at_10_3)}')
+        print(f'Precision at 10: {tf.reduce_mean(precision_at_10_3)}')
+        print(f'F1 at 10: {f1_at_10_3}')
 
