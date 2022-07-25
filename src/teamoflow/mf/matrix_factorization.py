@@ -78,6 +78,21 @@ class MatrixFactorization:
         if isinstance(self.item_repr_graph, ReLUEmbedding):
             self.item_aux_dim = 5 * self.n_components
 
+        # initialize all parameters necessary for ReLU Embedding
+        self.user_relu_bias = None
+        self.user_relu_weight = None
+
+        self.item_relu_bias = None
+        self.item_relu_weight = None
+
+        # initialize all parameters necessary for BiasedLinearEmbedding
+        self.user_linear_bias = None
+        self.item_linear_bias = None
+
+        # collect all trainable variables as an attribute
+        self.user_trainable = None
+        self.item_trainable = None
+
     def fit(self, epochs, user_features, item_features, tf_interactions, lr=1e-2):
         """
         NOTE: There are two types of loss functions to consider with our model:
@@ -114,8 +129,21 @@ class MatrixFactorization:
             start = t.default_timer()
             with tf.GradientTape(persistent=True) as tape:
                 # build embedding graphs for tracing in gradient
-                user_embedding = self.user_repr_graph.get_repr(user_features, U)
-                item_embedding = self.item_repr_graph.get_repr(item_features, V)
+                user_embedding, self.user_trainable = self.user_repr_graph.get_repr(features=user_features, weights=U, relu_weight=self.user_relu_weight, relu_bias=self.user_relu_bias, linear_bias=self.user_linear_bias)
+                item_embedding, self.item_trainable = self.item_repr_graph.get_repr(features=item_features, weights=V, relu_weight=self.item_relu_weight, relu_bias=self.item_relu_bias, linear_bias=self.item_linear_bias)
+
+                # save only certain weights depending on embedding graph
+                if isinstance(self.user_repr_graph, BiasedLinearEmbedding):
+                    _, self.user_linear_bias = self.user_trainable
+
+                if isinstance(self.user_repr_graph, ReLUEmbedding):
+                    _, self.user_relu_weight, self.user_relu_bias = self.user_trainable
+
+                if isinstance(self.item_repr_graph, BiasedLinearEmbedding):
+                    _, self.item_linear_bias = self.item_trainable
+
+                if isinstance(self.item_repr_graph, ReLUEmbedding):
+                    _, self.item_relu_weight, self.item_relu_bias = self.item_trainable
 
                 # generate predictions to trace the embeddings in autograph
                 predictions = tf.matmul(user_embedding, tf.transpose(item_embedding))
@@ -138,11 +166,12 @@ class MatrixFactorization:
                                                    tf_prediction_serial=tf_prediction_serial, predictions=predictions,
                                                    n_items=self.n_items, n_samples=self.n_samples)
 
-            dloss_dU = tape.gradient(loss_fn, U)
-            dloss_dV = tape.gradient(loss_fn, V)
+            # perform optimization on ALL trainable weights
+            dloss_dusers = tape.gradient(loss_fn, self.user_trainable)
+            dloss_ditems = tape.gradient(loss_fn, self.item_trainable)
 
-            li_grads = [dloss_dU, dloss_dV]
-            li_vars = [U, V]
+            li_grads = dloss_dusers + dloss_ditems
+            li_vars = self.user_trainable + self.item_trainable
 
             tf.keras.optimizers.Adam(learning_rate=lr).apply_gradients(zip(li_grads, li_vars))
             end = t.default_timer()
@@ -153,9 +182,9 @@ class MatrixFactorization:
             if (epoch + 1) % 100 == 0:
                 print(f'Epoch {epoch + 1} Complete | Loss {loss_one_epoch} | Runtime {cumulative_time:.5} s')
 
-        # IMPORTANT: compute the embeddings with the most recently updated weights
-        self.user_embedding = self.user_repr_graph.get_repr(user_features, U)
-        self.item_embedding = self.item_repr_graph.get_repr(item_features, V)
+        # IMPORTANT: compute the embeddings with the most recently updated weights, return the most updated weights
+        self.user_embedding, self.user_trainable = self.user_repr_graph.get_repr(features=user_features, weights=U, relu_weight=self.user_relu_weight, relu_bias=self.user_relu_bias, linear_bias=self.user_linear_bias)
+        self.item_embedding, self.item_trainable = self.item_repr_graph.get_repr(features=item_features, weights=V, relu_weight=self.item_relu_weight, relu_bias=self.item_relu_bias, linear_bias=self.item_linear_bias)
 
     def predict(self, A=None):
         """
@@ -305,7 +334,7 @@ class MatrixFactorization:
                        'Number of Samples': self.n_samples, 'Generate Sample': self.generate_sample}
 
         # will have another dictionary, containing results of the training run, so that we may make predictions and do other things easily
-        dict_results = {'User Embedding': self.user_embedding, 'Item Embedding': self.item_embedding}
+        dict_results = {'User Embedding': self.user_embedding, 'Item Embedding': self.item_embedding, 'User Variables': self.user_trainable, 'Item Variables': self.item_trainable}
 
         return dict_config, dict_results
 

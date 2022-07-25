@@ -92,7 +92,7 @@ if run == True:
     n_users, n_items = A_train.shape
     n_sampled_items = n_items // 5
     n_components = 5
-    epochs = 100
+    epochs = 75
 
     # WE WILL BE TRAINING BOTH MSE AND WMRB MODELS WITH THE SAME FEATURES AND HYPERPARAMETERS TO COMPARE PERFORMANCE
 
@@ -200,3 +200,8 @@ if run == True:
     print(f'Recall @ 50 on testing set (ratings >= 4) w/ WMRB: {tf.reduce_mean(recall_test_4plus_2_50).numpy()}')
     print(f'Recall @ 50 on testing set (ratings >= 4) w/ WMRB, biased: {tf.reduce_mean(recall_test_4plus_3_50).numpy()}')
     print(f'Recall @ 50 on testing set (ratings >= 4) w/ WMRB, ReLU representation: {tf.reduce_mean(recall_test_4plus_4_50).numpy()}')
+    print('\n')
+
+    print('Checking Weights:')
+    print(model_ml_100k_wmrb_relu_repr.item_relu_bias)
+    print(model_ml_100k_wmrb_relu_repr.item_trainable[2])

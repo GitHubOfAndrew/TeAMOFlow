@@ -4,6 +4,7 @@ import tensorflow as tf
 
 from src.teamoflow.mf.matrix_factorization import MatrixFactorization
 from src.teamoflow.mf.loss_graphs import WMRBLoss, KLDivergenceLoss
+from src.teamoflow.mf.embedding_graphs import *
 
 from src.teamoflow.mf.utils import generate_random_interaction
 
@@ -11,11 +12,11 @@ from src.teamoflow.mf.utils import generate_random_interaction
 # call the instance
 
 if __name__ == "__main__":
-    loss = 'KL'
+    loss = 'wmrb'
 
     # give dimensions and load toy data
     n_users, n_items, n_components = 500, 1000, 5
-    tf_interaction, A = generate_random_interaction(n_users, n_items, min_val=-5.0, density=0.01)
+    tf_interaction, A = generate_random_interaction(n_users, n_items, min_val=0.0, density=0.01)
 
     if loss == 'mse':
         # generate user, item features: use indicator features
@@ -54,21 +55,42 @@ if __name__ == "__main__":
         user_features = tf.eye(n_users)
         item_features = tf.eye(n_items)
 
-        # initialize model
+        # initialize models
         model2 = MatrixFactorization(n_components=n_components, n_users=n_users, n_items=n_items,
                                      n_samples=n_sampled_items, generate_sample=True, loss_graph=WMRBLoss())
+
+        model3 = MatrixFactorization(n_components=n_components, n_users=n_users, n_items=n_items,
+                                     n_samples=n_sampled_items, generate_sample=True, loss_graph=WMRBLoss(),
+                                     user_repr_graph=ReLUEmbedding(), item_repr_graph=ReLUEmbedding())
 
         epochs = 100
 
         model2.fit(epochs, user_features, item_features, tf_interaction, lr=0.1)
+        model3.fit(epochs, user_features, item_features, tf_interaction, lr=0.1)
 
         recall_at_10_2 = model2.recall_at_k(A, preserve_rows=True)
         precision_at_10_2 = model2.precision_at_k(A, preserve_rows=True)
         f1_at_10_2 = model2.f1_at_k(A)
 
+        recall_at_10_3 = model3.recall_at_k(A, preserve_rows=True)
+        precision_at_10_3 = model3.precision_at_k(A, preserve_rows=True)
+        f1_at_10_3 = model3.f1_at_k(A)
+
         print(f'Recall @ 10 w/ WMRB: {tf.reduce_mean(recall_at_10_2).numpy()}')
         print(f'Precision @ 10 w/ WMRB: {tf.reduce_mean(precision_at_10_2).numpy()}')
         print(f'f1 @ 10 w/ WMRB: {f1_at_10_2}')
+        print('\n')
+        print(f'Recall @ 10 w/ WMRB, ReLU Embedding: {tf.reduce_mean(recall_at_10_3).numpy()}')
+        print(f'Precision @ 10 w/ WMRB, ReLU Embedding: {tf.reduce_mean(precision_at_10_3).numpy()}')
+        print(f'f1 @ 10 w/ WMRB, ReLU Embedding: {f1_at_10_3}')
+        print('\n')
+        print('Check User ReLU Weights:')
+        print(model3.user_relu_bias)
+        print(model3.user_trainable[2])
+        print('\n')
+        print('Check Item ReLU Weights:')
+        print(model3.item_relu_bias)
+        print(model3.item_trainable[2])
 
 
     if loss == 'KL':
