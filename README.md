@@ -1,5 +1,21 @@
 # TeAMOFlow - (Tensor And Matrix Operations (with) tensorFlow)
 
+## Installation
+
+**TeAMOFlow is now available on PyPI**. There is still a lot of work to be done in terms of our presentation and features, but the basic version is fully functional now. Please install this and give it a try: https://pypi.org/project/teamoflow/.
+
+Dependencies:
+TeAMOFlow has the following dependencies:
+
+- Python 3.7+
+- tensorflow (2.9.0+) (`pip install tensorflow`)
+- tensorflow-probability (0.17.0+) (`pip install tensorflow-probability`)
+- numpy (`pip install numpy`)
+- scipy (`pip install scipy`)
+- pandas (`pip install pandas`)
+
+We put version numbers on the tensorflow-based libraries because the bulk of our code is built exclusively on tensorflow. The compatible version of numpy and scipy will be installed according to the version of tensorflow. Pandas is included for some of our optional utility functions, but it is not absolutely necessary for proper usage of our models. 
+
 ## Purpose
 
 This library is created to quickly deploy matrix-based models using TensorFlow as the computational and programmatic framework. TeAMOFlow stands for "***Te***nsor ***A***nd ***M***atrix ***O***perations (with) Tensor***Flow***". In particular, TeAMOFlow, at its core, is a library meant to facilitate query-key matching through machine learning. However, we made sure that the techniques (if applicable) could be extended to multiple domains of interest, where applicable.
