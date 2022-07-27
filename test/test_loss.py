@@ -16,6 +16,10 @@ n_samples = n_items // 2
 sparse_interaction, dense_interaction = generate_random_interaction(n_users=n_users, n_items=n_items, density=0.05)
 user_features, item_features = tf.eye(n_users), tf.eye(n_items)
 
+# use this interaction table of positive AND negative interactions for testing kl divergence loss
+sparse_mixed_interaction, dense_mixed_interaction = generate_random_interaction(n_users=n_users, n_items=n_items,
+                                                                                min_val=-5.0, max_val=5.0, density = 0.01)
+
 
 class TestLossGraph(TestCase):
     """
@@ -34,7 +38,6 @@ class TestLossGraph(TestCase):
             mf_model.fit(epochs=25, user_features=user_features, item_features=item_features,
                          tf_interactions=sparse_interaction)
 
-            print('MSE Loss Test Passed')
         except:
             print('MSE Loss Test Failed.')
 
@@ -50,9 +53,24 @@ class TestLossGraph(TestCase):
             mf_model.fit(25, user_features=user_features, item_features=item_features,
                          tf_interactions=sparse_interaction, lr=0.1)
 
-            print('WMRB Loss Test Passed.')
         except:
             print('WMRB Loss Test Failed.')
+
+    def test_kl_divergence(self):
+        """
+        This method will fit the matrix factorization model with the KL Divergence loss.
+
+        :return:
+        """
+        try:
+            mf_model = MatrixFactorization(3, loss_graph=KLDivergenceLoss())
+
+            mf_model.fit(25, user_features=user_features, item_features=item_features,
+                         tf_interactions=sparse_mixed_interaction, lr=0.1)
+
+        except:
+            print('KL Divergence Loss Test Failed.')
+
 
 if __name__ == 'main':
     unittest.main()

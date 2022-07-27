@@ -35,7 +35,6 @@ class TestInitializerGraph(TestCase):
             mf_model.fit(epochs=25, user_features=user_features, item_features=item_features,
                          tf_interactions=sparse_interaction)
 
-            print('Normal Initializer Test Passed.')
         except:
             print('Normal Initializer Test Failed.')
 
@@ -51,7 +50,6 @@ class TestInitializerGraph(TestCase):
             mf_model.fit(epochs=25, user_features=user_features, item_features=item_features,
                          tf_interactions=sparse_interaction)
 
-            print('Uniform Initializer Test Passed.')
         except:
             print('Uniform Initializer Test Failed.')
 

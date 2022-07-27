@@ -35,7 +35,6 @@ class TestEmbedding(TestCase):
             mf_model.fit(epochs=25, user_features=user_features, item_features=item_features,
                          tf_interactions=sparse_interaction)
 
-            print('Linear Embedding Test Passed.')
         except:
             print('Linear Embedding Test Failed.')
 
@@ -51,7 +50,6 @@ class TestEmbedding(TestCase):
             mf_model.fit(epochs=25, user_features=user_features, item_features=item_features,
                          tf_interactions=sparse_interaction)
 
-            print('Biased Linear Embedding Test Passed.')
         except:
             print('Biased Linear Embedding Test Failed.')
 
@@ -67,7 +65,6 @@ class TestEmbedding(TestCase):
             mf_model.fit(epochs=25, user_features=user_features, item_features=item_features,
                          tf_interactions=sparse_interaction)
 
-            print('ReLU Embedding Test Passed.')
         except:
             print('ReLU Embedding Test Failed.')
 

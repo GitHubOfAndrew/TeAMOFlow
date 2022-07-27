@@ -2,8 +2,6 @@
 
 import tensorflow as tf
 import tensorflow_probability as tp
-import numpy as np
-# from utils import random_sampler
 from abc import *
 
 

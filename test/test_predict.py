@@ -34,7 +34,7 @@ class TestPrediction(TestCase):
         prediction = mf_model.predict()
 
         if prediction is not None:
-            print('Graph Test Passed')
+            pass
         else:
             print('Graph Test Failed.')
 
