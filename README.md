@@ -1,8 +1,18 @@
 # TeAMOFlow - (Tensor And Matrix Operations (with) tensorFlow)
 
+If you want to skip the exposition and get started right away, please visit this [link](https://colab.research.google.com/drive/1JTRi81F3bgf_aai3Hz1eXnGVEToTpqZ-).
+
 ## Installation
 
-**TeAMOFlow is now available on PyPI**. There is still a lot of work to be done in terms of our presentation and features, but the basic version is fully functional now. Please install this and give it a try: https://pypi.org/project/teamoflow/.
+**TeAMOFlow is now available to be installed.** Check it out on [PyPI](https://pypi.org/project/teamoflow/).
+
+To install, please open your conda environment or python venv and type in the following:
+
+```
+pip install teamoflow
+```
+
+**Note: The dependencies do not get installed with this installation, please follow the following notes on minimum package dependencies.**
 
 Dependencies:
 TeAMOFlow has the following dependencies:
@@ -142,7 +152,7 @@ recall_at_100_1 = mf_model1.recall_at_k(A_toy, k=100)
 print(f'The recall @ 100 is {tf.reduce_mean(recall_at_100_1).numpy() * 100:.5f}%.')
 ```
 
-The only parameter we must specify upon instantiation of our model is the *number of components* (this is the common dimension into which we embed our user and item features). We can also specify custom loss function, user/item embeddings, and the user/item initializations, but the default configuration is a model with the MSE loss, un-biased linear embeddings, and normal initializations. To see a more extensive tutorial, please run this Google Colab notebook giving a more extensive demonstration of a teamoflow workflow: https://colab.research.google.com/drive/1JTRi81F3bgf_aai3Hz1eXnGVEToTpqZ-#scrollTo=2a304dbb.
+The only parameter we must specify upon instantiation of our model is the *number of components* (this is the common dimension into which we embed our user and item features). We can also specify custom loss function, user/item embeddings, and the user/item initializations, but the default configuration is a model with the MSE loss, un-biased linear embeddings, and normal initializations. To see a more extensive tutorial, please go to this [link](https://colab.research.google.com/drive/1JTRi81F3bgf_aai3Hz1eXnGVEToTpqZ-).
 
 We can see how our model performed by using the **precision @ k**, **recall @ k**, **f1 @ k** metrics. By default, we use k=10.
 
@@ -152,7 +162,7 @@ We can see how our model performed by using the **precision @ k**, **recall @ k*
 
 In recommender systems, since our main goal is to rank items according to user preferences, precision and recall are more appropriate to judging the effectiveness of our model. In other contexts, this may not be so appropriate and we can adopt different scoring methods.
 
-For more detail into what precision and recall are, visit: https://en.wikipedia.org/wiki/Evaluation_measures_(information_retrieval)
+There is more detail on what these metrics mean [here](https://en.wikipedia.org/wiki/Evaluation_measures_(information_retrieval)).
 
 ## Benchmark Results
 
@@ -192,6 +202,6 @@ With more preprocessing, feature engineering, and different choices of predictio
 
 ## Acknowledgments
 
-We would like to acknowledge the efforts of James Kirk and his fantastic project **TensorRec** (link: https://github.com/jfkirk/tensorrec), from which this project took inspiration from. In fact, this project came out as an effort to adopt Tensorrec for the TensorFlow 2.x environment (as that library is written on TensorFlow 1.x and is no longer supported). By no means are the ideas behind this work 100% original, they are from many fantastic tutorials and academic research done in the field. I have added my own optimizations and workflow in this, however. Please contact me if there are any questions or concerns.
+We would like to acknowledge the efforts of James Kirk and his fantastic project [**TensorRec**](https://github.com/jfkirk/tensorrec), from which this project took inspiration from. In fact, this project came out as an effort to adopt Tensorrec for the TensorFlow 2.x environment (as that library is written on TensorFlow 1.x and is no longer supported). By no means are the ideas behind this work 100% original, they are from many fantastic tutorials and academic research done in the field. I have added my own optimizations and workflow in this, however. Please contact me if there are any questions or concerns.
 
 ***Note:*** This project is extremely early in its development cycle and not nearly close to completed to where I would like. Please open a pull request or an issue if there are any changes/improvements that need to be suggested.
