@@ -1,4 +1,4 @@
-![TeAMOFlow Logo v1](https://user-images.githubusercontent.com/85316690/182062859-369c9b14-4dc3-417b-954b-26097b2cd4d0.png)
+![TeAMOFlow Logo v1 (Rectangle)](https://user-images.githubusercontent.com/85316690/182063301-622a1a85-323a-4643-b254-87445fe4d230.png)
 
 # TeAMOFlow - (Tensor And Matrix Operations (with) tensorFlow)
 
