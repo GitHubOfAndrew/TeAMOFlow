@@ -1,3 +1,5 @@
+![TeAMOFlow Logo v1](https://user-images.githubusercontent.com/85316690/182062859-369c9b14-4dc3-417b-954b-26097b2cd4d0.png)
+
 # TeAMOFlow - (Tensor And Matrix Operations (with) tensorFlow)
 
 If you want to skip the exposition and get started right away, please visit this [link](https://colab.research.google.com/drive/1JTRi81F3bgf_aai3Hz1eXnGVEToTpqZ-).
