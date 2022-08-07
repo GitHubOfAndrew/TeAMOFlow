@@ -313,7 +313,7 @@ class MatrixFactorization:
 
         return ((1 + beta**2) * prec * rec) / (beta**2 * (prec + rec))
 
-    def retrieve_user_recs(self, user, k=10):
+    def retrieve_user_recs(self, user=None, k=None):
         """
         Method to retrieve the item recommendations for a certain user. We will be retrieving item ranks, not prediction values.
 
@@ -322,8 +322,20 @@ class MatrixFactorization:
         :return: a numpy array containing the indices to the top k rated items
         """
         all_predictions = self.predict()
+        num_users, num_items = all_predictions.shape
 
-        return tf.math.top_k(all_predictions[user], k=k).indices.numpy()
+        # if user is not specified, but rank is specified, return top k item rankings for all users
+        if user is None and k is not None:
+            return tf.math.top_k(all_predictions, k=k).indices.numpy()
+        # if user is specified, but k is specified, return all rankings for specified user
+        if user is not None and k is None:
+            return tf.math.top_k(all_predictions[user], k=num_items).indices.numpy()
+        # if user is specified and k is specified, return top k rankings for specific user
+        if user is not None and k is not None:
+            return tf.math.top_k(all_predictions[user], k=k).indices.numpy()
+        # if user is not specified and k is not specified, return all item rankings for all users
+        if user is None and k is None:
+            return tf.math.top_k(all_predictions, k=num_items).indices.numpy()
 
     def save_model(self):
         """
