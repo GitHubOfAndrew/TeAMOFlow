@@ -179,7 +179,7 @@ class MatrixFactorization:
             loss_one_epoch = tf.reduce_mean(loss_fn)
             cumulative_time += (end - start)
 
-            if (epoch + 1) % 100 == 0:
+            if (epoch + 1) % 25 == 0:
                 print(f'Epoch {epoch + 1} Complete | Loss {loss_one_epoch} | Runtime {cumulative_time:.5} s')
 
         # IMPORTANT: compute the embeddings with the most recently updated weights, return the most updated weights
@@ -309,19 +309,20 @@ class MatrixFactorization:
 
         precision, recall = self.precision_at_k(A, k=k), self.recall_at_k(A, k=k)
 
-        prec, rec = precision, recall
+        prec, rec = tf.reduce_mean(precision), tf.reduce_mean(recall)
 
         return ((1 + beta**2) * prec * rec) / (beta**2 * (prec + rec))
 
-    def retrieve_user_recs(self, user, k):
+    def retrieve_user_recs(self, user, k=10):
         """
-        Method to retrieve the item recommendations for a certain user.
+        Method to retrieve the item recommendations for a certain user. We will be retrieving item ranks, not prediction values.
 
         :param user: python int: a row index representing the user
+        :param k: python int: specifies how many top items to bring
         :return: a numpy array containing the indices to the top k rated items
         """
         all_predictions = self.predict()
-        
+
         return tf.math.top_k(all_predictions[user], k=k).indices.numpy()
 
     def save_model(self):
