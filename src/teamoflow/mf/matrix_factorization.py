@@ -221,7 +221,7 @@ class MatrixFactorization:
 
         Furthermore, this recall_at_k is consistent with the definition of recall at k in the LightFM documentation as well: https://making.lyst.com/lightfm/docs/_modules/lightfm/evaluation.html#precision_at_k
 
-        Specifically, the recall at k refers to: for a user, the number of known positives in top k predictions / number of positives in top k
+        Specifically, the recall at k refers to: for a user, the number of relevant recommended items in top k predictions / number of relevant items in top k
 
         This function computes the recall @ k for each user. To find the total recall at k, just take the mean.
 
@@ -270,6 +270,10 @@ class MatrixFactorization:
 
     def precision_at_k(self, A, k=10, preserve_rows=False):
         """
+        Computes precision at k, this is the number of predictions in the top k that are relevant. This is different from the recall at k, which is the number of known positives in the top k predictions.
+
+        Specifically, precision at k = relevant recommended items in top k / k
+
         :param A: tensorflow tensor: the interaction table
         :param k: python int: number of top items we want to see
         :param preserve_rows: a python boolean: if false, then take out the users who have 0 interactions from the computation, otherwise, include all users
@@ -312,6 +316,93 @@ class MatrixFactorization:
         prec, rec = tf.reduce_mean(precision), tf.reduce_mean(recall)
 
         return ((1 + beta**2) * prec * rec) / (beta**2 * (prec + rec))
+
+    def dcg_at_k(self, dense_interactions, k=10):
+        """
+        Compute the Discounted Cumulative Gain (DCG) for top k predictions.
+
+        The DCG score considers the order of the items retrieved in a query (i.e. recommended items for a user).
+
+        A relevant (in the interaction table) item that is retrieved earlier contributes more to the DCG score. This metric judges the effectiveness of the recommender/retrieval system in not only retrieving relevant recommendations, but doing so in the most relevant ORDER as well.
+
+        :param dense_interactions: tensorflow tensor: a dense (ordinary) tensor containing the interactions
+        :param k: python int: the amount of items retrieved
+        :return: tensorflow tensor: contains the dcg score per user for the top k retrieved items
+        """
+        predictions = self.predict()
+        user_num, item_num = predictions.shape
+
+        # get the indices of the top k indices
+        ranks_user = tf.cast(tf.math.top_k(predictions, k=item_num).indices, dtype=tf.int64)
+
+        # NOTE: We use the modified definition of dcg score to compute this, this version gives more weight to relevant items
+        numerator = tf.pow(2.0, gather_matrix_indices(dense_interactions, ranks_user)) - 1.0
+
+        # create tensor with order number of each interaction in the numerator
+        denominator_arg = tf.transpose(
+            tf.repeat(tf.range(1, item_num + 1, dtype=tf.float32)[:, tf.newaxis], user_num, axis=1))
+
+        # convert log of the order to base 2
+        denominator = tf.math.log1p(denominator_arg) / tf.math.log(2.0)
+
+        summation_term = numerator / denominator
+
+        # return the dcg score of the top k predictions
+        return tf.reduce_sum(summation_term[:, :k], axis=1)
+
+    def idcg_at_k(self, dense_interactions, k=10):
+        """
+        Computes the Ideal Discounted Cumulative Gain (IDCG) for top k predictions.
+
+        The IDCG score is the DCG score for a theoretically perfect recommendation/retrieval (i.e. if the top k retrieved items for a user corresponded to the relevant items in the original interaction).
+
+        :param dense_interactions: a tensorflow tensor: a dense (ordinary) tensor containing the interactions
+        :param k: python int: the amount of items retrieved
+        :return: tensorflow tensor: contains the idcg score per user for top k items retrieved
+        """
+        predictions = self.predict()
+        user_num, item_num = predictions.shape
+
+        # get the indices of the top k indices
+        ranks_user = tf.cast(tf.math.top_k(predictions, k=item_num).indices, dtype=tf.int64)
+
+        # NOTE: We use the modified definition of dcg score to compute this, this version gives more weight to relevant items
+        numerator = tf.pow(2.0, gather_matrix_indices(dense_interactions, ranks_user)) - 1.0
+
+        # sort the numerator terms to get the ideal dcg
+        ideal_int = tf.math.top_k(numerator, k=item_num).values
+
+        # create tensor with order number of each interaction in the numerator
+        denominator_arg = tf.transpose(
+            tf.repeat(tf.range(1, item_num + 1, dtype=tf.float32)[:, tf.newaxis], user_num, axis=1))
+
+        # convert log of the order to base 2
+        denominator = tf.math.log1p(denominator_arg) / tf.math.log(2.0)
+
+        ideal_summation_term = ideal_int / denominator
+
+        return tf.reduce_sum(ideal_summation_term[:, :k], axis=1)
+
+    def ndcg_at_k(self, A, k=10, preserve_rows=False):
+
+        # compute dcg
+        dcg = self.dcg_at_k(A, k)
+
+        # compute idcg
+        idcg = self.idcg_at_k(A, k)
+
+        # compute ndcg
+        ndcg = dcg / idcg
+
+        if not preserve_rows:
+            # we throw away all rows with no interactions in the computation
+            nonzero_ints = tf.math.count_nonzero(A, axis=1)
+            mask = nonzero_ints > 0
+            return tf.boolean_mask(ndcg, mask)
+        else:
+            # ensure that all the metrics for rows with no interactions are 0 so that we don't get overflow error
+            return tf.where(~tf.math.is_nan(ndcg), ndcg, 0.0)
+
 
     def retrieve_user_recs(self, user=None, k=None):
         """
