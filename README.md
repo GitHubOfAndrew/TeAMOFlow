@@ -72,7 +72,7 @@ Let $U$ and $V$ be matrices with common rank $r$, such that $U \in M_{m\times r}
 
 Then, for *user embedding* and *item embedding*, $U$, $V$, respectively, and an appropriate loss function $\mathcal{L}$ (that computes the deviation between $A$ and $U\cdot V^{T}$), we want to find $U$, $V$ such that:
 
-$$\mathcal{L}(A, U, V) < \varepsilon \quad \forall i,j : A_{ij} \neq 0$$
+$$\mathcal{L}(A, U, V)_{ij} < \varepsilon \quad \forall i,j : A_{ij} \neq 0$$
 
 TeAMOFlow computes the embeddings in the following way:
 
@@ -83,18 +83,14 @@ $$U = f(W_{u}) \quad V = g(W_{v})$$
 Therefore, the full workflow of matrix factorization, in TeAMOFlow, is summarizable as follows:
 
 - Select user features and item features, $W_{u}$, $W_{v}$.
-- Initialize trainable weights and compute user and item embeddings ($U$, $V$), choosing our embedding functions $f$, $g$ appropriately. The result will be $U = f(W_{u})$, $V = g(W_{u})$.
+- Initialize trainable weights and compute user and item embeddings ($U$ and $V$), choosing our embedding functions $f$, $g$ appropriately. The result will be $U = f(W_{u})$, $V = g(W_{u})$.
 - Compute our loss function $\mathcal{L}(A, U, V)$.
 - Take the gradient and perform gradient descent/optimization on initialized weights.
 - Repeat steps 3, 4.
 
 ## Getting Started with TeAMOFlow Matrix Factorization Library
 
-To start seeing how to utilize models in our Matrix Factorization library, let us generate random interaction data calling our generate_random_interaction() method.
-
-The following code snippet will generate a random interaction table between 100 users, 1000 items, which is 0.5% dense (meaning only about 0.5% of the entries are nonzero). The nonzero entries in this matrix indicate an *interaction* between *user* and *item* of some sort. 
-
-There are usually two classes of interactions:
+**Interactions** are at the forefront of recommendations. There are usually two classes of interactions:
 
 1) **Explicit Interactions**
 
@@ -107,6 +103,10 @@ These are encoded events in which users passively describe their experience with
 **NOTE:** Regarding ethics of privacy and data collection, it is usually advised to let users know that your data is being collected as transparency can save organizations from legal trouble and develop a sense of trust with clients/consumers. I am not a legal expert, this is just common sense.
 
 With that said, let us write a sample workflow in teamoflow:
+
+To start seeing how to utilize models in our Matrix Factorization library, let us generate random interaction data calling our generate_random_interaction() method.
+
+The following code snippet will generate a random interaction table between 300 users, 1000 items, which is 0.5% dense (meaning only about 0.5% of the entries are nonzero). The nonzero entries in this matrix indicate an *interaction* between *user* and *item* of some sort. 
 
 ```
 from teamoflow.mf import *
