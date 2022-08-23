@@ -6,17 +6,21 @@ from src.teamoflow.mf.matrix_factorization import MatrixFactorization
 from src.teamoflow.mf.loss_graphs import WMRBLoss, KLDivergenceLoss
 from src.teamoflow.mf.embedding_graphs import *
 
+from src.teamoflow.nn.user_tower import *
+
 from src.teamoflow.mf.utils import generate_random_interaction
 
 
 # call the instance
 
 if __name__ == "__main__":
-    loss = 'wmrb'
+    loss = ''
+
+    model = 'Query Tower'
 
     # give dimensions and load toy data
-    n_users, n_items, n_components = 500, 1000, 5
-    tf_interaction, A = generate_random_interaction(n_users, n_items, min_val=0.0, density=0.01)
+    n_users, n_items, n_components = 300, 1000, 5
+    tf_interaction, A = generate_random_interaction(n_users, n_items, min_val=0.0, max_val=5.0, density=0.01)
 
     if loss == 'mse':
         # generate user, item features: use indicator features
@@ -129,3 +133,24 @@ if __name__ == "__main__":
         print(f'Precision at 10: {tf.reduce_mean(precision_at_10_3)}')
         print(f'F1 at 10: {f1_at_10_3}')
 
+    if model == 'Query Tower':
+        user_features = tf.eye(n_users)
+
+        n_users, n_features = user_features.shape
+        # initialize model
+        units = [256, 64, 32, 16, 1000]
+        activations = [tf.identity, tf.nn.relu, tf.nn.relu, tf.nn.relu, tf.nn.sigmoid]
+        qt_model1 = QTSoftmax(n_features, units, activations)
+
+        # print(qt_model1.weights)
+
+        history_nn = qt_model1.fit(user_features, A, epochs=250, lr=1e-3)
+
+
+        recall_at_10_qt = qt_model1.recall_at_k(user_features, A, k=10)
+        precision_at_10_qt = qt_model1.precision_at_k(user_features, A, k=10)
+        ndcg_at_10_qt = qt_model1.ndcg_at_k(user_features, A, k=10)
+
+        print(f'Recall at 10: {tf.reduce_mean(recall_at_10_qt).numpy()}')
+        print(f'Precision at 10: {tf.reduce_mean(precision_at_10_qt).numpy()}')
+        print(f'NDCG at 10: {tf.reduce_mean(ndcg_at_10_qt).numpy()}')

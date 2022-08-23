@@ -36,7 +36,7 @@ class NormalInitializer(Initializer):
 
         :return:
         """
-        return tf.Variable(tf.nn.l2_normalize(tf.random.normal(shape=(self.x_num, self.y_num), dtype=tf.float32)), trainable=True)
+        return tf.Variable(tf.random.normal(shape=(self.x_num, self.y_num), dtype=tf.float32), trainable=True)
 
 
 class UniformInitializer(Initializer):
@@ -57,6 +57,6 @@ class UniformInitializer(Initializer):
 
         :return:
         """
-        return tf.Variable(tf.nn.l2_normalize(tf.random.uniform(shape=(self.x_num, self.y_num), dtype=tf.float32)),
+        return tf.Variable(tf.random.uniform(shape=(self.x_num, self.y_num), dtype=tf.float32),
                            trainable=True)
 

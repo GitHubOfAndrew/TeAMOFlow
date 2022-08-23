@@ -384,7 +384,16 @@ class MatrixFactorization:
         return tf.reduce_sum(ideal_summation_term[:, :k], axis=1)
 
     def ndcg_at_k(self, A, k=10, preserve_rows=False):
+        """
+        Computes the NDCG score (Normalized Discounted Cumulative Gain).
 
+        Computes the success of the model's retrieval by judging if it retrieved relevant items with most priority.
+
+        :param A: tensorflow tensor: a dense interaction table
+        :param k: python int: how many top items we will retrieve
+        :param preserve_rows: python boolean: flag indicating whether to preserve the users with no interactions
+        :return:
+        """
         # compute dcg
         dcg = self.dcg_at_k(A, k)
 
