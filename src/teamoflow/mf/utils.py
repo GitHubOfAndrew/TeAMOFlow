@@ -83,7 +83,7 @@ def gather_matrix_indices(input_arr, index_arr):
                           [8, 8, 8],
                           [1, 2, 6]], dtype=tf.float32)
 
-
+    NOTE: This function is equivalent to torch.gather in PyTorch, when we indicate axis=1. tf.gather, unfortunately, does not do the same thing as torch.gather.
 
     :param input_arr: a tensorflow tensor, the tensor whose entries we are gathering
     :param index_arr: a tensorflow tensor, the tensor of row-wise indices, must have same number of rows as input_arr
